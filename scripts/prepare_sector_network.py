@@ -2162,6 +2162,7 @@ def add_heat(n, costs):
 
         if options["chp"] and name == "urban central":
             # add gas CHP; biomass CHP is added in biomass section
+            """
             n.madd(
                 "Link",
                 nodes[name] + " urban central gas CHP",
@@ -2180,7 +2181,35 @@ def add_heat(n, costs):
                 efficiency3=costs.at["gas", "CO2 intensity"],
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
+            """
+            if snakemake.config["co2_atmosphere_global"]:
+                logger.info("Configure model with a global urban central gas CHP link")
+                bus3 = spatial.co2.atmospheres[0]
+            else:
+                logger.info("Configure model with %d local/nodal urban central gas CHP links" % len(nodes[name]))
+                bus3 = spatial.co2.atmospheres
+            n.madd("Link",
+                   nodes[name] + " urban central gas CHP",
+                   bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
+                   bus1 = nodes[name],
+                   bus2 = nodes[name] + " urban central heat",
+                   bus3 = bus3,
+                   carrier = "urban central gas CHP",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   p_nom_extendable = True,
+                   capital_cost = costs.at["central gas CHP", "fixed"] * costs.at["central gas CHP", "efficiency"],
+                   marginal_cost = costs.at["central gas CHP", "VOM"],
+                   efficiency = costs.at["central gas CHP", "efficiency"],
+                   efficiency2 = costs.at["central gas CHP", "efficiency"] / costs.at["central gas CHP", "c_b"],
+                   efficiency3 = costs.at["gas", "CO2 intensity"],
+                   lifetime = costs.at["central gas CHP", "lifetime"]
+                  )
+            #print(50 * "=")
+            #selection = n.links.query("carrier.str.contains('urban central gas CHP')")
+            #print("Urban central gas CHP links: %d" % len(selection))
+            #print(selection)
+            #print(50 * "=")
 
+            """
             n.madd(
                 "Link",
                 nodes[name] + " urban central gas CHP CC",
@@ -2216,8 +2245,38 @@ def add_heat(n, costs):
                 * costs.at["biomass CHP capture", "capture_rate"],
                 lifetime=costs.at["central gas CHP", "lifetime"],
             )
+            """
+            if snakemake.config["co2_atmosphere_global"]:
+                logger.info("Configure model with a global urban central gas CHP CC link")
+                bus3 = spatial.co2.atmospheres[0]
+            else:
+                logger.info("Configure model with %d local/nodal urban central gas CHP CC links" % len(nodes[name]))
+                bus3 = spatial.co2.atmospheres
+            n.madd("Link",
+                   nodes[name] + " urban central gas CHP CC",
+                   bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
+                   bus1 = nodes[name],
+                   bus2 = nodes[name] + " urban central heat",
+                   bus3 = bus3,
+                   bus4 = spatial.co2.df.loc[nodes[name], "nodes"].values,
+                   carrier = "urban central gas CHP CC",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   p_nom_extendable = True,
+                   capital_cost = costs.at["central gas CHP", "fixed"] * costs.at["central gas CHP", "efficiency"] + costs.at["biomass CHP capture", "fixed"] * costs.at["gas", "CO2 intensity"],
+                   marginal_cost = costs.at["central gas CHP", "VOM"],
+                   efficiency = costs.at["central gas CHP", "efficiency"] - costs.at["gas", "CO2 intensity"] * (costs.at["biomass CHP capture", "electricity-input"] + costs.at["biomass CHP capture", "compression-electricity-input"]),
+                   efficiency2 = costs.at["central gas CHP", "efficiency"] / costs.at["central gas CHP", "c_b"] + costs.at["gas", "CO2 intensity"] * (costs.at["biomass CHP capture", "heat-output"] + costs.at["biomass CHP capture", "compression-heat-output"] - costs.at["biomass CHP capture", "heat-input"]),
+                   efficiency3 = costs.at["gas", "CO2 intensity"] * (1 - costs.at["biomass CHP capture", "capture_rate"]),
+                   efficiency4 = costs.at["gas", "CO2 intensity"] * costs.at["biomass CHP capture", "capture_rate"],
+                   lifetime = costs.at["central gas CHP", "lifetime"]
+                  )
+            #print(50 * "=")
+            #selection = n.links.query("carrier.str.contains('urban central gas CHP CC')")
+            #print("Urban central gas CHP CC links: %d" % len(selection))
+            #print(selection)
+            #print(50 * "=")
 
         if options["chp"] and options["micro_chp"] and name != "urban central":
+            """
             n.madd(
                 "Link",
                 nodes[name] + f" {name} micro gas CHP",
@@ -2233,6 +2292,32 @@ def add_heat(n, costs):
                 capital_cost=costs.at["micro CHP", "fixed"],
                 lifetime=costs.at["micro CHP", "lifetime"],
             )
+            """
+            if snakemake.config["co2_atmosphere_global"]:
+                logger.info("Configure model with a global micro gas CHP link")
+                bus3 = spatial.co2.atmospheres[0]
+            else:
+                logger.info("Configure model with %d local/nodal micro gas CHP links" % len(nodes[name]))
+                bus3 = spatial.co2.atmospheres
+            n.madd("Link",
+                   nodes[name] + f" {name} micro gas CHP",
+                   p_nom_extendable = True,
+                   bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
+                   bus1 = nodes[name],
+                   bus2 = nodes[name] + f" {name} heat",
+                   bus3 = bus3,
+                   carrier = name + " micro gas CHP",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   efficiency = costs.at["micro CHP", "efficiency"],
+                   efficiency2 = costs.at["micro CHP", "efficiency-heat"],
+                   efficiency3 = costs.at["gas", "CO2 intensity"],
+                   capital_cost = costs.at["micro CHP", "fixed"],
+                   lifetime = costs.at["micro CHP", "lifetime"]
+                  )
+            #print(50 * "=")
+            #selection = n.links.query("carrier.str.contains('micro gas CHP')")
+            #print("Micro gas CHP links: %d" % len(selection))
+            #print(selection)
+            #print(50 * "=")
 
     if options["retrofitting"]["retro_endogen"]:
         logger.info("Add retrofitting endogenously")
@@ -2440,6 +2525,7 @@ def add_biomass(n, costs):
         e_initial=solid_biomass_potentials_spatial,
     )
 
+    """
     n.madd(
         "Link",
         spatial.gas.biogas_to_gas,
@@ -2452,6 +2538,29 @@ def add_biomass(n, costs):
         efficiency2=-costs.at["gas", "CO2 intensity"],
         p_nom_extendable=True,
     )
+    """
+    if snakemake.config["co2_atmosphere_global"]:
+        logger.info("Configure model with a global biogas to gas link")
+        bus2 = spatial.co2.atmospheres[0]
+    else:
+        logger.info("Configure model with %d local/nodal biogas to gas links" % len(spatial.gas.biogas_to_gas))
+        bus2 = spatial.co2.atmospheres
+    n.madd("Link",
+           spatial.gas.biogas_to_gas,
+           bus0 = spatial.gas.biogas,
+           bus1 = spatial.gas.nodes,
+           bus2 = bus2,
+           carrier = "biogas to gas",   # TODO: check if separated (i.e. local/nodal) values are needed
+           capital_cost = costs.loc["biogas upgrading", "fixed"],
+           marginal_cost = costs.loc["biogas upgrading", "VOM"],
+           efficiency2 = -costs.at["gas", "CO2 intensity"],
+           p_nom_extendable = True
+          )
+    #print(50 * "=")
+    #selection = n.links.query("carrier.str.contains('biogas to gas')")
+    #print("Biogas to gas links: %d" % len(selection))
+    #print(selection)
+    #print(50 * "=")
 
     if options["biomass_transport"]:
         transport_costs = pd.read_csv(
@@ -2505,6 +2614,7 @@ def add_biomass(n, costs):
             lifetime=costs.at[key, "lifetime"],
         )
 
+        """
         n.madd(
             "Link",
             urban_central + " urban central solid biomass CHP CC",
@@ -2538,6 +2648,35 @@ def add_biomass(n, costs):
             * costs.at["biomass CHP capture", "capture_rate"],
             lifetime=costs.at[key, "lifetime"],
         )
+        """
+        if snakemake.config["co2_atmosphere_global"]:
+            logger.info("Configure model with a global urban central solid biomass CHP CC link")
+            bus3 = spatial.co2.atmospheres[0]
+        else:
+            logger.info("Configure model with %d local/nodal urban central solid biomass CHP CC links" % len(urban_central))
+            bus3 = spatial.co2.atmospheres
+        n.madd("Link",
+               urban_central + " urban central solid biomass CHP CC",
+               bus0 = spatial.biomass.df.loc[urban_central, "nodes"].values,
+               bus1 = urban_central,
+               bus2 = urban_central + " urban central heat",
+               bus3 = bus3,
+               bus4 = spatial.co2.df.loc[urban_central, "nodes"].values,
+               carrier = "urban central solid biomass CHP CC",   # TODO: check if separated (i.e. local/nodal) values are needed
+               p_nom_extendable = True,
+               capital_cost = costs.at[key, "fixed"] * costs.at[key, "efficiency"] + costs.at["biomass CHP capture", "fixed"] * costs.at["solid biomass", "CO2 intensity"],
+               marginal_cost = costs.at[key, "VOM"],
+               efficiency = costs.at[key, "efficiency"] - costs.at["solid biomass", "CO2 intensity"] * (costs.at["biomass CHP capture", "electricity-input"] + costs.at["biomass CHP capture", "compression-electricity-input"]),
+               efficiency2 = costs.at[key, "efficiency-heat"] + costs.at["solid biomass", "CO2 intensity"] * (costs.at["biomass CHP capture", "heat-output"] + costs.at["biomass CHP capture", "compression-heat-output"] - costs.at["biomass CHP capture", "heat-input"]),
+               efficiency3 = -costs.at["solid biomass", "CO2 intensity"] * costs.at["biomass CHP capture", "capture_rate"],
+               efficiency4 = costs.at["solid biomass", "CO2 intensity"] * costs.at["biomass CHP capture", "capture_rate"],
+               lifetime = costs.at[key, "lifetime"]
+              )
+        #print(50 * "=")
+        #selection = n.links.query("carrier.str.contains('urban central solid biomass CHP CC')")
+        #print("Urban central solid biomass CHP CC links: %d" % len(selection))
+        #print(selection)
+        #print(50 * "=")
 
     if options["biomass_boiler"]:
         # TODO: Add surcharge for pellets
