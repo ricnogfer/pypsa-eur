@@ -60,7 +60,7 @@ def define_spatial(nodes, options):
 
     spatial.biomass = SimpleNamespace()
 
-    if not snakemake.config["co2_global_atmosphere"] or options.get("biomass_spatial", options["biomass_transport"]):
+    if options.get("biomass_spatial", options["biomass_transport"]) or not snakemake.config["co2_global_atmosphere"]:
         spatial.biomass.nodes = nodes + " solid biomass"
         spatial.biomass.locations = nodes
         spatial.biomass.industry = nodes + " solid biomass for industry"
@@ -83,7 +83,7 @@ def define_spatial(nodes, options):
     else:
         spatial.co2.atmospheres = ["co2 atmosphere"]
 
-    if not snakemake.config["co2_global_atmosphere"] or options["co2_spatial"]:
+    if options["co2_spatial"] or not snakemake.config["co2_global_atmosphere"]:
         spatial.co2.nodes = nodes + " co2 stored"
         spatial.co2.locations = nodes
         spatial.co2.vents = nodes + " co2 vent"
@@ -100,7 +100,7 @@ def define_spatial(nodes, options):
 
     spatial.gas = SimpleNamespace()
 
-    if not snakemake.config["co2_global_atmosphere"] or options["gas_network"]:
+    if options["gas_network"] or not snakemake.config["co2_global_atmosphere"]:
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
         spatial.gas.biogas = nodes + " biogas"
@@ -140,12 +140,12 @@ def define_spatial(nodes, options):
 
     # methanol
     spatial.methanol = SimpleNamespace()
-    spatial.methanol.nodes = ["EU methanol"]   # TODO: check if separated (i.e. local/nodal) values are needed
+    spatial.methanol.nodes = ["EU methanol"]
     spatial.methanol.locations = ["EU"]
 
     # oil
     spatial.oil = SimpleNamespace()
-    spatial.oil.nodes = ["EU oil"]   # TODO: check if separated (i.e. local/nodal) values are needed
+    spatial.oil.nodes = ["EU oil"]
     spatial.oil.locations = ["EU"]
 
     # uranium
@@ -155,7 +155,7 @@ def define_spatial(nodes, options):
 
     # coal
     spatial.coal = SimpleNamespace()
-    spatial.coal.nodes = ["EU coal"]   # TODO: check if separated (i.e. local/nodal) values are needed
+    spatial.coal.nodes = ["EU coal"]
     spatial.coal.locations = ["EU"]
 
     # lignite
@@ -550,7 +550,7 @@ def add_co2_tracking(n, options):
         n.madd("Bus",
                spatial.co2.atmospheres,
                location = spatial.nodes.str[:2],
-               carrier = spatial.nodes + " co2",   # TODO: check if carrier should be per node as it is currently or if it should be global (i.e. "EU")
+               carrier = "co2",
                unit = "t_co2"
               )
     #print(50 * "=")
@@ -639,7 +639,7 @@ def add_co2_tracking(n, options):
     n.madd("Bus",
            spatial.co2.nodes,
            location = location,
-           carrier = carrier,
+           carrier = carrier,   # TODO: it should be "co2 stored" but, somehow, if one sets the carrier that way the solver will not reach to a solution afterwards
            unit = "t_co2"
           )
     #print(50 * "=")
@@ -694,16 +694,14 @@ def add_co2_tracking(n, options):
         if snakemake.config["co2_global_atmosphere"]:
             logger.info("Configure model with a global CO2 vent link")
             bus1 = spatial.co2.atmospheres[0]   # TODO: this can be removed
-            carrier = "co2 vent"
         else:
             logger.info("Configure model with %d local/nodal CO2 vent links" % len(spatial.co2.vents))
             bus1 = spatial.co2.atmospheres
-            carrier = spatial.nodes + " co2 vent"   # TODO: should this be split?
         n.madd("Link",
                spatial.co2.vents,
                bus0 = spatial.co2.nodes,
                bus1 = bus1,
-               carrier = carrier,
+               carrier = "co2 vent",
                efficiency = 1.0,
                p_nom_extendable = True
               )
@@ -1554,6 +1552,7 @@ def add_storage_and_grids(n, costs):
             lifetime=costs.at["coal", "lifetime"],
         )
         """
+        # TODO: understand why it gives "WARNING:pypsa.io:The following Link have buses which are not defined" (it happens with original code too)
         if snakemake.config["co2_global_atmosphere"]:
             logger.info("Configure model with a global coal CC link")
             bus2 = spatial.co2.atmospheres[0]   # TODO: remove this
