@@ -582,26 +582,26 @@ def add_co2_tracking(n, options):
     else:
         logger.info("Configure model with %d local/nodal CO2 atmosphere stores" % len(spatial.co2.atmospheres))
 
-        # read CSV file containing disparate industries/services CO2 emissions
+        # read CSV file containing disparate industries/services CO2 emissions (in megatonnes)
         co2_emissions = pd.read_csv(snakemake.input.co2_totals_name, index_col = 0)
 
-        # sum disparate industries/services CO2 emissions per country (in tCO2)
+        # sum disparate industries/services CO2 emissions per country (in tonnes)
         co2_emissions_per_country = co2_emissions.sum(axis = 1) * 1e6
 
         # get CO2 budget per country (in percentage)
         co2_budget_per_country = snakemake.config["co2_budget_per_country"]
 
-        # read CSV file containing population layout (currently, the population layout fraction is used as a local/nodal ratio - this can always be changed in case it is incorrect after all)
+        # read CSV file containing population layout per country (currently, the population layout fraction is used as a local/nodal ratio - this can always be changed in case it is incorrect after all)
         pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col = 0)
 
         # loop through local/nodal CO2 atmospheres
         for atmosphere in spatial.co2.atmospheres:
 
-            # calculate maximum local/nodal CO2 emissions value
+            # calculate maximum CO2 emissions value per local/node
             country = atmosphere[:2]
             node = atmosphere[:5]
-            ratio = pop_layout.loc[node]["fraction"]
-            e_max_pu = co2_emissions_per_country[country] * co2_budget_per_country[country] * ratio
+            fraction = pop_layout.loc[node]["fraction"]
+            e_max_pu = co2_emissions_per_country[country] * fraction * co2_budget_per_country[country]
 
             # add store to local/nodal CO2 atmosphere
             n.add("Store",
@@ -609,7 +609,7 @@ def add_co2_tracking(n, options):
                   e_nom = 1,
                   e_min_pu = 0,
                   e_max_pu = e_max_pu,
-                  carrier = node + " co2",
+                  carrier = "co2",
                   bus = atmosphere
                  )
     #print(50 * "=")
@@ -1556,18 +1556,16 @@ def add_storage_and_grids(n, costs):
         if snakemake.config["co2_global_atmosphere"]:
             logger.info("Configure model with a global coal CC link")
             bus2 = spatial.co2.atmospheres[0]   # TODO: remove this
-            bus3 = "co2 stored"
         else:
             logger.info("Configure model with %d local/nodal coal CC links" % len(nodes))
             bus2 = spatial.co2.atmospheres
-            bus3 = spatial.nodes + " co2 stored"
         n.madd("Link",
                spatial.nodes,
                suffix = " coal CC",
                bus0 = spatial.coal.nodes,   # TODO: check if separated (i.e. local/nodal) values are needed
                bus1 = spatial.nodes,
                bus2 = bus2,
-               bus3 = bus3,
+               bus3 = spatial.co2.nodes,
                marginal_cost = costs.at["coal", "efficiency"] * costs.at["coal", "VOM"], #NB: VOM is per MWel
                capital_cost = costs.at["coal", "efficiency"] * costs.at["coal", "fixed"] + costs.at["biomass CHP capture", "fixed"] * costs.at["coal", "CO2 intensity"], #NB: fixed cost is per MWel
                p_nom_extendable = True,
@@ -1854,6 +1852,7 @@ def add_land_transport(n, costs):
                 carrier = "land transport oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                 p_set = -co2
             )
+        # TODO: it seems to be complete (check it)
         #print(50 * "=")
         #selection = n.loads.query("carrier.str.contains('land transport oil emissions')")
         #print("Land transport oil emissions loads: %d" % len(selection))
@@ -3242,6 +3241,7 @@ def add_industry(n, costs):
                   p_set = -co2
                  )
         else:
+            # TODO: it should have different CO2 for the p_set
             logger.info("Configure model with %d local/nodal shipping methanol emissions loads" % len(spatial.nodes))
             n.madd("Load",
                    spatial.nodes + " shipping methanol emissions",
@@ -3249,6 +3249,7 @@ def add_industry(n, costs):
                    carrier = "shipping methanol emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_set = -co2   # TODO: check if separated (i.e. local/nodal) values are needed
                   )
+        # TODO: complete this
         #print(50 * "=")
         #selection = n.loads.query("carrier.str.contains('shipping methanol emissions')")
         #print("Shipping methanol emissions loads: %d" % len(selection))
@@ -3297,6 +3298,7 @@ def add_industry(n, costs):
                    carrier = "shipping oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_set = -co2.values
                   )
+        # TODO: it seems to be complete (check this)
         print(50 * "=")
         selection = n.loads.query("carrier.str.contains('shipping oil emissions')")
         print("Shipping oil emissions load: %d" % len(selection))
@@ -3470,8 +3472,9 @@ def add_industry(n, costs):
                carrier = "oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                p_set = -co2.values
               )
+    # TODO: it seems to be complete (check this)
     #print(50 * "=")
-    #selection = n.loads[n.loads["carrier"].str.contains("oil emissions")]
+    #selection = n.loads.query("carrier.str.contains('oil emissions')")
     #print("Oil emissions loads: %d" % len(selection))
     #print(selection)
     #print(50 * "=")
@@ -3783,6 +3786,7 @@ def add_agriculture(n, costs):
                    carrier = "agriculture machinery oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_set = -co2.values
                   )
+        # TODO: it seems to be complete (check this)
         #print(50 * "=")
         #selection = n.loads.query("carrier.str.contains('agriculture machinery oil emissions')")
         #print("Agriculture machinery oil emissions loads: %d" % len(selection))
