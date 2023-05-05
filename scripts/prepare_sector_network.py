@@ -591,16 +591,13 @@ def add_co2_tracking(n, options):
         # get CO2 budget per country (in percentage)
         co2_budget_per_country = snakemake.config["co2_budget_per_country"]
 
-        # read CSV file containing population layout per country (currently, the population layout fraction is used as a local/nodal ratio - this can always be changed in case it is incorrect after all)
-        pop_layout = pd.read_csv(snakemake.input.clustered_pop_layout, index_col = 0)
-
         # loop through local/nodal CO2 atmospheres
         for atmosphere in spatial.co2.atmospheres:
 
-            # calculate maximum CO2 emissions value per local/node
+            # calculate maximum CO2 emissions value allowed per local/node
             country = atmosphere[:2]
             node = atmosphere[:5]
-            fraction = pop_layout.loc[node]["fraction"]
+            fraction = pop_layout.loc[node]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
             e_max_pu = co2_emissions_per_country[country] * fraction * co2_budget_per_country[country]
 
             # add store to local/nodal CO2 atmosphere
@@ -3241,15 +3238,18 @@ def add_industry(n, costs):
                   p_set = -co2
                  )
         else:
-            # TODO: it should have different CO2 for the p_set
             logger.info("Configure model with %d local/nodal shipping methanol emissions loads" % len(spatial.nodes))
+
+            # calculate shipping methanol emissions value per local/node
+            fraction = pop_layout.loc[spatial.nodes]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
+            co2 = co2 * fraction
+
             n.madd("Load",
                    spatial.nodes + " shipping methanol emissions",
                    bus = spatial.co2.atmospheres,
                    carrier = "shipping methanol emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
-                   p_set = -co2   # TODO: check if separated (i.e. local/nodal) values are needed
+                   p_set = -co2.values
                   )
-        # TODO: complete this
         #print(50 * "=")
         #selection = n.loads.query("carrier.str.contains('shipping methanol emissions')")
         #print("Shipping methanol emissions loads: %d" % len(selection))
@@ -3466,6 +3466,11 @@ def add_industry(n, costs):
         logger.info("Configure model with %d local/nodal oil emissions loads" % len(spatial.nodes))
         co2_release = ["naphtha for industry", "kerosene for aviation"]
         co2 = n.loads.loc[co2_release, "p_set"].sum() * costs.at["oil", "CO2 intensity"] - industrial_demand.loc[nodes, "process emission from feedstock"] / nhours   # TODO: check if logic is correct
+
+        # calculate oil emissions value per local/node
+        fraction = pop_layout.loc[spatial.nodes]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
+        co2 = co2 * fraction
+
         n.madd("Load",
                spatial.nodes + " oil emissions",
                bus = spatial.co2.atmospheres,
@@ -3528,7 +3533,7 @@ def add_industry(n, costs):
     )
 
     sel = ["process emission", "process emission from feedstock"]
-    if options["co2_spatial"] or options["co2network"]:
+    if options["co2_spatial"] or options["co2network"] or not snakemake.config["co2_global_atmosphere"]:
         p_set = (
             -industrial_demand.loc[nodes, sel]
             .sum(axis=1)
@@ -3780,6 +3785,11 @@ def add_agriculture(n, costs):
         else:
             logger.info("Configure model with %d local/nodal agriculture machinery oil emissions loads" % len(spatial.nodes))
             co2 = oil_share * machinery_nodal_energy * 1e6 / nhours * costs.at["oil", "CO2 intensity"]   # TODO: check if logic is correct
+
+            # calculate agriculture machinery oil emissions value per local/node
+            fraction = pop_layout.loc[spatial.nodes]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
+            co2 = co2 * fraction
+
             n.madd("Load",
                    spatial.nodes + " agriculture machinery oil emissions",
                    bus = spatial.co2.atmospheres,
