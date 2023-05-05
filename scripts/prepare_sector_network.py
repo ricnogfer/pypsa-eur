@@ -2179,23 +2179,25 @@ def add_heat(n, costs):
             """
             if snakemake.config["co2_global_atmosphere"]:
                 logger.info("Configure model with a global urban central gas CHP link")
-                bus3 = spatial.co2.atmospheres[0]   # TODO: remove this
+                efficiency3 = costs.at["gas", "CO2 intensity"]
             else:
                 logger.info("Configure model with %d local/nodal urban central gas CHP links" % len(nodes[name]))
-                bus3 = spatial.co2.atmospheres
+
+                # calculate efficiency based on the population layout fraction as a metric to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
+                efficiency3 = pd.Series(costs.at["gas", "CO2 intensity"] * pop_layout["fraction"]).values
             n.madd("Link",
                    nodes[name] + " urban central gas CHP",
                    bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
                    bus1 = nodes[name],
                    bus2 = nodes[name] + " urban central heat",
-                   bus3 = bus3,
+                   bus3 = spatial.co2.atmospheres,
                    carrier = "urban central gas CHP",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_nom_extendable = True,
                    capital_cost = costs.at["central gas CHP", "fixed"] * costs.at["central gas CHP", "efficiency"],
                    marginal_cost = costs.at["central gas CHP", "VOM"],
                    efficiency = costs.at["central gas CHP", "efficiency"],
                    efficiency2 = costs.at["central gas CHP", "efficiency"] / costs.at["central gas CHP", "c_b"],
-                   efficiency3 = costs.at["gas", "CO2 intensity"],
+                   efficiency3 = efficiency3,
                    lifetime = costs.at["central gas CHP", "lifetime"]
                   )
             #print(50 * "=")
@@ -3206,7 +3208,11 @@ def add_industry(n, costs):
         efficiency = (
             options["shipping_oil_efficiency"] / options["shipping_methanol_efficiency"]
         )
-        p_set_methanol = shipping_methanol_share * p_set.sum() * efficiency
+
+        if snakemake.config["co2_global_atmosphere"]:
+            p_set_methanol = shipping_methanol_share * p_set.sum() * efficiency
+        else:
+            p_set_methanol = shipping_methanol_share * p_set * efficiency
 
         n.madd(
             "Load",
@@ -3229,6 +3235,7 @@ def add_industry(n, costs):
             p_set=-co2,
         )
         """
+        # INFO: the logic concerning "shipping methanol emissions" is correct
         if snakemake.config["co2_global_atmosphere"]:
             logger.info("Configure model with a global shipping methanol emissions load")
             n.add("Load",
@@ -3239,11 +3246,6 @@ def add_industry(n, costs):
                  )
         else:
             logger.info("Configure model with %d local/nodal shipping methanol emissions loads" % len(spatial.nodes))
-
-            # calculate shipping methanol emissions value per local/node
-            fraction = pop_layout.loc[spatial.nodes]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
-            co2 = co2 * fraction
-
             n.madd("Load",
                    spatial.nodes + " shipping methanol emissions",
                    bus = spatial.co2.atmospheres,
@@ -3564,6 +3566,7 @@ def add_industry(n, costs):
         efficiency=1.0,
     )
     """
+    #INFO: the logic concerning "process emissions" is correct
     if snakemake.config["co2_global_atmosphere"]:
         logger.info("Configure model with a global process emissions link")
     else:
