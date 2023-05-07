@@ -3466,12 +3466,18 @@ def add_industry(n, costs):
              )
     else:
         logger.info("Configure model with %d local/nodal oil emissions loads" % len(spatial.nodes))
-        co2_release = ["naphtha for industry", "kerosene for aviation"]
-        co2 = n.loads.loc[co2_release, "p_set"].sum() * costs.at["oil", "CO2 intensity"] - industrial_demand.loc[nodes, "process emission from feedstock"] / nhours   # TODO: check if logic is correct
 
-        # calculate oil emissions value per local/node
-        fraction = pop_layout.loc[spatial.nodes]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
-        co2 = co2 * fraction
+        # get HVC demand per local/node
+        HVC_demand_factor = options.get("HVC_demand_factor", 1)
+        HVC_demand_p_set = HVC_demand_factor * industrial_demand.loc[nodes, "naphtha"] / nhours
+
+        # get aviation demand per local/node
+        aviation_demand_factor = options.get("aviation_demand_factor", 1)
+        aviation_demand_p_set = aviation_demand_factor * pop_weighted_energy_totals.loc[nodes, all_aviation].sum(axis = 1) * 1e6 / nhours
+
+        # calculate CO2 oil emissions value per local/node
+        process_emission_from_feedstock = industrial_demand.loc[nodes, "process emission from feedstock"] / nhours
+        co2 = (HVC_demand_p_set + aviation_demand_p_set) * costs.at["oil", "CO2 intensity"] - process_emission_from_feedstock
 
         n.madd("Load",
                spatial.nodes + " oil emissions",
@@ -3479,7 +3485,7 @@ def add_industry(n, costs):
                carrier = "oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                p_set = -co2.values
               )
-    # TODO: it seems to be complete (check this)
+    # INFO: the logic concerning "oil emissions" is correct
     #print(50 * "=")
     #selection = n.loads.query("carrier.str.contains('oil emissions')")
     #print("Oil emissions loads: %d" % len(selection))
@@ -3566,7 +3572,7 @@ def add_industry(n, costs):
         efficiency=1.0,
     )
     """
-    #INFO: the logic concerning "process emissions" is correct
+    # INFO: the logic concerning "process emissions" is correct
     if snakemake.config["co2_global_atmosphere"]:
         logger.info("Configure model with a global process emissions link")
     else:
@@ -3787,19 +3793,14 @@ def add_agriculture(n, costs):
                  )
         else:
             logger.info("Configure model with %d local/nodal agriculture machinery oil emissions loads" % len(spatial.nodes))
-            co2 = oil_share * machinery_nodal_energy * 1e6 / nhours * costs.at["oil", "CO2 intensity"]   # TODO: check if logic is correct
-
-            # calculate agriculture machinery oil emissions value per local/node
-            fraction = pop_layout.loc[spatial.nodes]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
-            co2 = co2 * fraction
-
+            co2 = oil_share * machinery_nodal_energy * 1e6 / nhours * costs.at["oil", "CO2 intensity"]
             n.madd("Load",
                    spatial.nodes + " agriculture machinery oil emissions",
                    bus = spatial.co2.atmospheres,
                    carrier = "agriculture machinery oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_set = -co2.values
                   )
-        # TODO: it seems to be complete (check this)
+        # INFO: the logic concerning "agriculture machinery oil emissions" is correct
         #print(50 * "=")
         #selection = n.loads.query("carrier.str.contains('agriculture machinery oil emissions')")
         #print("Agriculture machinery oil emissions loads: %d" % len(selection))
