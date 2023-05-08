@@ -553,11 +553,6 @@ def add_co2_tracking(n, options):
                carrier = "co2",
                unit = "t_co2"
               )
-    #print(50 * "=")
-    #selection = n.buses.query("carrier.str.contains('co2')")
-    #print("CO2 atmosphere buses: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     # can also be negative
     """
@@ -609,11 +604,6 @@ def add_co2_tracking(n, options):
                   carrier = "co2",
                   bus = atmosphere
                  )
-    #print(50 * "=")
-    #selection = n.stores.query("carrier.str.contains('co2')")
-    #print("CO2 atmosphere stores: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     # this tracks CO2 stored, e.g. underground
     """
@@ -639,11 +629,6 @@ def add_co2_tracking(n, options):
            carrier = carrier,   # TODO: it should be "co2 stored" but, somehow, if one sets the carrier that way the solver will not reach to a solution afterwards
            unit = "t_co2"
           )
-    #print(50 * "=")
-    #selection = n.buses.query("carrier.str.contains('co2 stored')")
-    #print("CO2 stored buses: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     if options["regional_co2_sequestration_potential"]["enable"]:
         upper_limit = (
@@ -702,11 +687,6 @@ def add_co2_tracking(n, options):
                efficiency = 1.0,
                p_nom_extendable = True
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('co2 vent')")
-        #print("CO2 vent links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
 def add_co2_network(n, costs):
     logger.info("Adding CO2 network.")
@@ -812,11 +792,6 @@ def add_dac(n, costs):
            p_nom_extendable = True,
            lifetime = costs.at["direct air capture", "lifetime"]
           )
-    #print(50 * "=")
-    #selection = n.links.query("carrier.str.contains('DAC')")
-    #print("CO2 DAC links: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
 
 def add_co2limit(n, nyears=1.0, limit=0.0):
@@ -956,11 +931,6 @@ def add_generation(n, costs):
                efficiency2 = costs.at[carrier, "CO2 intensity"],
                lifetime = costs.at[generator, "lifetime"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('%s')" % generator)
-        #print("CO2 generator links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
 
 def add_ammonia(n, costs):
@@ -1572,11 +1542,6 @@ def add_storage_and_grids(n, costs):
                efficiency3 = costs.at["coal", "CO2 intensity"] * costs.at["biomass CHP capture", "capture_rate"],
                lifetime = costs.at["coal", "lifetime"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('coal')")
-        #print("Coal CC links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
     if options["SMR"]:
         """
@@ -1618,11 +1583,6 @@ def add_storage_and_grids(n, costs):
                capital_cost = costs.at["SMR CC", "fixed"],
                lifetime = costs.at["SMR CC", "lifetime"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('SMR CC')")
-        #print("SMR CC links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
         """
         n.madd(
@@ -1657,11 +1617,6 @@ def add_storage_and_grids(n, costs):
                capital_cost = costs.at["SMR", "fixed"],
                lifetime = costs.at["SMR", "lifetime"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('SMR')")
-        #print("SMR links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
 
 def add_land_transport(n, costs):
@@ -1844,17 +1799,12 @@ def add_land_transport(n, costs):
             logger.info("Configure model with %d local/nodal land transport oil emissions loads" % len(spatial.nodes))
             co2 = ice_share / ice_efficiency * transport[nodes].sum() / nhours * costs.at["oil", "CO2 intensity"]   # TODO: check if logic is correct
             n.madd("Load",
-                spatial.nodes + " land transport oil emissions",
-                bus = spatial.co2.atmospheres,
-                carrier = "land transport oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
-                p_set = -co2
-            )
+                   spatial.nodes + " land transport oil emissions",
+                   bus = spatial.co2.atmospheres,
+                   carrier = "land transport oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   p_set = -co2
+                  )
         # TODO: it seems to be complete (check it)
-        #print(50 * "=")
-        #selection = n.loads.query("carrier.str.contains('land transport oil emissions')")
-        #print("Land transport oil emissions loads: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
 
 def build_heat_demand(n):
@@ -2134,11 +2084,6 @@ def add_heat(n, costs):
                    capital_cost = costs.at[key, "efficiency"] * costs.at[key, "fixed"],
                    lifetime = costs.at[key, "lifetime"]
                   )
-            #print(50 * "=")
-            #selection = n.links.query("carrier.str.contains('gas boiler')")
-            #print("Gas boiler links: %d" % len(selection))
-            #print(selection)
-            #print(50 * "=")
 
         if options["solar_thermal"]:
             n.add("Carrier", name + " solar thermal")
@@ -2200,11 +2145,6 @@ def add_heat(n, costs):
                    efficiency3 = efficiency3,
                    lifetime = costs.at["central gas CHP", "lifetime"]
                   )
-            #print(50 * "=")
-            #selection = n.links.query("carrier.str.contains('urban central gas CHP')")
-            #print("Urban central gas CHP links: %d" % len(selection))
-            #print(selection)
-            #print(50 * "=")
 
             """
             n.madd(
@@ -2266,11 +2206,6 @@ def add_heat(n, costs):
                    efficiency4 = costs.at["gas", "CO2 intensity"] * costs.at["biomass CHP capture", "capture_rate"],
                    lifetime = costs.at["central gas CHP", "lifetime"]
                   )
-            #print(50 * "=")
-            #selection = n.links.query("carrier.str.contains('urban central gas CHP CC')")
-            #print("Urban central gas CHP CC links: %d" % len(selection))
-            #print(selection)
-            #print(50 * "=")
 
         if options["chp"] and options["micro_chp"] and name != "urban central":
             """
@@ -2310,11 +2245,6 @@ def add_heat(n, costs):
                    capital_cost = costs.at["micro CHP", "fixed"],
                    lifetime = costs.at["micro CHP", "lifetime"]
                   )
-            #print(50 * "=")
-            #selection = n.links.query("carrier.str.contains('micro gas CHP')")
-            #print("Micro gas CHP links: %d" % len(selection))
-            #print(selection)
-            #print(50 * "=")
 
     if options["retrofitting"]["retro_endogen"]:
         logger.info("Add retrofitting endogenously")
@@ -2553,11 +2483,6 @@ def add_biomass(n, costs):
            efficiency2 = -costs.at["gas", "CO2 intensity"],
            p_nom_extendable = True
           )
-    #print(50 * "=")
-    #selection = n.links.query("carrier.str.contains('biogas to gas')")
-    #print("Biogas to gas links: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     if options["biomass_transport"]:
         transport_costs = pd.read_csv(
@@ -2669,11 +2594,6 @@ def add_biomass(n, costs):
                efficiency4 = costs.at["solid biomass", "CO2 intensity"] * costs.at["biomass CHP capture", "capture_rate"],
                lifetime = costs.at[key, "lifetime"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('urban central solid biomass CHP CC')")
-        #print("Urban central solid biomass CHP CC links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
     if options["biomass_boiler"]:
         # TODO: Add surcharge for pellets
@@ -2737,11 +2657,6 @@ def add_biomass(n, costs):
                capital_cost = costs.at["BtL", "fixed"],
                marginal_cost = costs.at["BtL", "efficiency"] * costs.loc["BtL", "VOM"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('biomass to liquid')")
-        #print("Biomass to liquid links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
         # TODO: Update with energy penalty
         """
@@ -2787,11 +2702,6 @@ def add_biomass(n, costs):
                capital_cost = costs.at["BtL", "fixed"] + costs.at["biomass CHP capture", "fixed"] * costs.at["BtL", "CO2 stored"],
                marginal_cost = costs.at["BtL", "efficiency"] * costs.loc["BtL", "VOM"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('biomass to liquid')")
-        #print("Biomass to liquid links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
     # BioSNG from solid biomass
     if options["biosng"]:
@@ -2833,11 +2743,6 @@ def add_biomass(n, costs):
                capital_cost = costs.at["BioSNG", "fixed"],
                marginal_cost = costs.at["BioSNG", "efficiency"] * costs.loc["BioSNG", "VOM"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('BioSNG')")
-        #print("Solid biomass to gas links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
         # TODO: Update with energy penalty for CC
         """
@@ -2886,11 +2791,6 @@ def add_biomass(n, costs):
                capital_cost = costs.at["BioSNG", "fixed"] + costs.at["biomass CHP capture", "fixed"] * costs.at["BioSNG", "CO2 stored"],
                marginal_cost = costs.at["BioSNG", "efficiency"] * costs.loc["BioSNG", "VOM"]
               )
-        #print(50 * "=")
-        #selection = n.links.query("carrier.str.contains('BioSNG')")
-        #print("Solid biomass to gas CC links: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
 
 def add_industry(n, costs):
@@ -2981,11 +2881,6 @@ def add_industry(n, costs):
            efficiency3 = costs.at["solid biomass", "CO2 intensity"] * costs.at["cement capture", "capture_rate"],
            lifetime = costs.at["cement capture", "lifetime"]
           )
-    #print(50 * "=")
-    #selection = n.links.query("carrier.str.contains('solid biomass for industry CC')")
-    #print("Solid biomass for industry CC links: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     n.madd(
         "Bus",
@@ -3039,11 +2934,6 @@ def add_industry(n, costs):
            efficiency = 1.0,
            efficiency2 = costs.at["gas", "CO2 intensity"]
           )
-    #print(50 * "=")
-    #selection = n.links.query("carrier.str.contains('gas for industry')")
-    #print("Gas for industry links: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     """
     n.madd(
@@ -3085,11 +2975,6 @@ def add_industry(n, costs):
            efficiency3 = costs.at["gas", "CO2 intensity"] * costs.at["cement capture", "capture_rate"],
            lifetime = costs.at["cement capture", "lifetime"]
           )
-    #print(50 * "=")
-    #selection = n.links.query("carrier.str.contains('gas for industry CC')")
-    #print("Gas for industry CC links: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     n.madd(
         "Load",
@@ -3252,11 +3137,6 @@ def add_industry(n, costs):
                    carrier = "shipping methanol emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_set = -co2.values
                   )
-        #print(50 * "=")
-        #selection = n.loads.query("carrier.str.contains('shipping methanol emissions')")
-        #print("Shipping methanol emissions loads: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
     if shipping_oil_share:
         p_set_oil = shipping_oil_share * p_set.sum()
@@ -3381,11 +3261,6 @@ def add_industry(n, costs):
                    capital_cost = costs.at["decentral oil boiler", "efficiency"] * costs.at["decentral oil boiler", "fixed"],
                    lifetime = costs.at["decentral oil boiler", "lifetime"]
                   )
-            #print(50 * "=")
-            #selection = n.links.query("carrier.str.contains('%s oil boiler')" % name)
-            #print("%s oil boiler links: %d" % (name, len(selection)))
-            #print(selection)
-            #print(50 * "=")
 
     n.madd(
         "Link",
@@ -3454,6 +3329,7 @@ def add_industry(n, costs):
         p_set=-co2,
     )
     """
+    # INFO: the logic concerning "oil emissions" is correct
     if snakemake.config["co2_global_atmosphere"]:
         logger.info("Configure model with a global oil emissions load")
         co2_release = ["naphtha for industry", "kerosene for aviation"]
@@ -3485,12 +3361,6 @@ def add_industry(n, costs):
                carrier = "oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                p_set = -co2.values
               )
-    # INFO: the logic concerning "oil emissions" is correct
-    #print(50 * "=")
-    #selection = n.loads.query("carrier.str.contains('oil emissions')")
-    #print("Oil emissions loads: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     # TODO simplify bus expression
     n.madd(
@@ -3585,11 +3455,6 @@ def add_industry(n, costs):
            p_nom_extendable = True,
            efficiency = 1.0
           )
-    #print(50 * "=")
-    #selection = n.links.query("carrier.str.contains('process emissions')")
-    #print("Process emissions links: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     # assume enough local waste heat for CC
     """
@@ -3625,11 +3490,6 @@ def add_industry(n, costs):
            efficiency2 = costs.at["cement capture", "capture_rate"],
            lifetime = costs.at["cement capture", "lifetime"]
           )
-    #print(50 * "=")
-    #selection = n.links.query("carrier.str.contains('process emissions CC')")
-    #print("Process emissions CC links: %d" % len(selection))
-    #print(selection)
-    #print(50 * "=")
 
     if options.get("ammonia"):
         if options["ammonia"] == "regional":
@@ -3782,6 +3642,7 @@ def add_agriculture(n, costs):
             p_set=-co2,
         )
         """
+        # INFO: the logic concerning "agriculture machinery oil emissions" is correct
         if snakemake.config["co2_global_atmosphere"]:
             logger.info("Configure model with a global agriculture machinery oil emissions load")
             co2 = oil_share * machinery_nodal_energy.sum() * 1e6 / nhours * costs.at["oil", "CO2 intensity"]
@@ -3800,12 +3661,6 @@ def add_agriculture(n, costs):
                    carrier = "agriculture machinery oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_set = -co2.values
                   )
-        # INFO: the logic concerning "agriculture machinery oil emissions" is correct
-        #print(50 * "=")
-        #selection = n.loads.query("carrier.str.contains('agriculture machinery oil emissions')")
-        #print("Agriculture machinery oil emissions loads: %d" % len(selection))
-        #print(selection)
-        #print(50 * "=")
 
 
 def decentral(n):
