@@ -593,14 +593,13 @@ def add_co2_tracking(n, options):
             country = atmosphere[:2]
             node = atmosphere[:5]
             fraction = pop_layout.loc[node]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
-            e_max_pu = co2_emissions_per_country[country] * fraction * co2_budget_per_country[country]
+            e_nom = co2_emissions_per_country[country] * fraction * co2_budget_per_country[country]
 
             # add store to local/nodal CO2 atmosphere
             n.add("Store",
                   atmosphere,
-                  e_nom = 1,
-                  e_min_pu = 0,
-                  e_max_pu = e_max_pu,
+                  e_nom = e_nom,
+                  e_min_pu = -1,
                   carrier = "co2",
                   bus = atmosphere
                  )
@@ -1786,6 +1785,7 @@ def add_land_transport(n, costs):
             p_set=-co2,
         )
         """
+        # INFO: the logic concerning "land transport oil emissions" is correct
         if snakemake.config["co2_global_atmosphere"]:
             logger.info("Configure model with a global land transport oil emissions load")
             co2 = ice_share / ice_efficiency * transport[nodes].sum().sum() / nhours * costs.at["oil", "CO2 intensity"]
@@ -1797,14 +1797,13 @@ def add_land_transport(n, costs):
                  )
         else:
             logger.info("Configure model with %d local/nodal land transport oil emissions loads" % len(spatial.nodes))
-            co2 = ice_share / ice_efficiency * transport[nodes].sum() / nhours * costs.at["oil", "CO2 intensity"]   # TODO: check if logic is correct
+            co2 = ice_share / ice_efficiency * transport[nodes].sum() / nhours * costs.at["oil", "CO2 intensity"]
             n.madd("Load",
                    spatial.nodes + " land transport oil emissions",
                    bus = spatial.co2.atmospheres,
                    carrier = "land transport oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_set = -co2
                   )
-        # TODO: it seems to be complete (check it)
 
 
 def build_heat_demand(n):
@@ -2124,12 +2123,8 @@ def add_heat(n, costs):
             """
             if snakemake.config["co2_global_atmosphere"]:
                 logger.info("Configure model with a global urban central gas CHP link")
-                efficiency3 = costs.at["gas", "CO2 intensity"]
             else:
                 logger.info("Configure model with %d local/nodal urban central gas CHP links" % len(nodes[name]))
-
-                # calculate efficiency based on the population layout fraction as a metric to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
-                efficiency3 = pd.Series(costs.at["gas", "CO2 intensity"] * pop_layout["fraction"]).values
             n.madd("Link",
                    nodes[name] + " urban central gas CHP",
                    bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
@@ -2142,7 +2137,7 @@ def add_heat(n, costs):
                    marginal_cost = costs.at["central gas CHP", "VOM"],
                    efficiency = costs.at["central gas CHP", "efficiency"],
                    efficiency2 = costs.at["central gas CHP", "efficiency"] / costs.at["central gas CHP", "c_b"],
-                   efficiency3 = efficiency3,
+                   efficiency3 = costs.at["gas", "CO2 intensity"],
                    lifetime = costs.at["central gas CHP", "lifetime"]
                   )
 
@@ -3150,9 +3145,9 @@ def add_industry(n, costs):
             p_set=p_set_oil,
         )
 
+        """
         co2 = p_set_oil * costs.at["oil", "CO2 intensity"]
 
-        """
         n.add(
             "Load",
             "shipping oil emissions",
@@ -3161,9 +3156,10 @@ def add_industry(n, costs):
             p_set=-co2,
         )
         """
+        # INFO: the logic concerning "shipping oil emissions" is correct
         if snakemake.config["co2_global_atmosphere"]:
             logger.info("Configure model with a global shipping oil emissions load")
-            #co2 = shipping_oil_share * pop_weighted_energy_totals.loc[nodes, all_navigation].sum().sum() * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]
+            co2 = p_set_oil * costs.at["oil", "CO2 intensity"]
             n.add("Load",
                   "shipping oil emissions",
                   bus = spatial.co2.atmospheres[0],
@@ -3172,21 +3168,13 @@ def add_industry(n, costs):
                  )
         else:
             logger.info("Configure model with %d local/nodal shipping oil emissions loads" % len(spatial.nodes))
-            #pwet = pop_weighted_energy_totals.loc[nodes, all_navigation]
-            #co2 = shipping_oil_share * pwet.iloc[:].sum(axis = 1) * 1e6 / 8760 * costs.at["oil", "CO2 intensity"]   # TODO: check if logic is correct
+            co2 = shipping_oil_share * p_set * costs.at["oil", "CO2 intensity"]
             n.madd("Load",
                    spatial.nodes + " shipping oil emissions",
                    bus = spatial.co2.atmospheres,
                    carrier = "shipping oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
                    p_set = -co2.values
                   )
-        # TODO: it seems to be complete (check this)
-        print(50 * "=")
-        selection = n.loads.query("carrier.str.contains('shipping oil emissions')")
-        print("Shipping oil emissions load: %d" % len(selection))
-        print(selection)
-        print(50 * "=")
-        print(88/0)
 
     if "oil" not in n.buses.carrier.unique():
         n.madd(
