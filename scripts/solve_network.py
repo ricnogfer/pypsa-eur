@@ -572,11 +572,25 @@ def extra_functionality(n, snapshots):
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
-    for o in opts:
-        if "EQ" in o:
-            add_EQ_constraints(n, o)
+
+    # process "EQ" option only when model is based on a global CO2 atmosphere
+    if config["co2_global_atmosphere"]:
+        for o in opts:
+            if "EQ" in o:
+                add_EQ_constraints(n, o)
+                break
+
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
+
+    # add local/nodal energy balance constraint when model is based on local/nodal CO2 atmospheres
+    if not config["co2_global_atmosphere"]:
+        for o in opts:
+            if "EQ" in o:
+                countries = config["co2_budget_per_country"].keys()
+                logger.info("Add %d local/nodal energy balance constraints" % len(n.buses.set_index("country").loc[countries]))
+                add_EQ_constraints(n, "EQ1.0")   # TODO: check that logic implemented in this function is correct/adequate to guarantee that supply (generators) matchs exactly the demand (loads) in each local/node
+                break
 
 
 def solve_network(n, config, opts="", **kwargs):
