@@ -274,13 +274,13 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     float_regex = "[0-9]*\.?[0-9]+"
     level = float(re.findall(float_regex, o)[0])
     if o[-1] == "c":
-        ggrouper = n.generators.bus.map(n.buses.country).to_xarray()
-        lgrouper = n.loads.bus.map(n.buses.country).to_xarray()
-        sgrouper = n.storage_units.bus.map(n.buses.country).to_xarray()
+        ggrouper = n.generators.bus.map(n.buses.country)
+        lgrouper = n.loads.bus.map(n.buses.country)
+        sgrouper = n.storage_units.bus.map(n.buses.country)
     else:
-        ggrouper = n.generators.bus.to_xarray()
-        lgrouper = n.loads.bus.to_xarray()
-        sgrouper = n.storage_units.bus.to_xarray()
+        ggrouper = n.generators.bus
+        lgrouper = n.loads.bus
+        sgrouper = n.storage_units.bus
     load = (
         n.snapshot_weightings.generators
         @ n.loads_t.p_set.groupby(lgrouper, axis=1).sum()
@@ -294,7 +294,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
     p = n.model["Generator-p"]
     lhs_gen = (
         (p * (n.snapshot_weightings.generators * scaling))
-        .groupby(ggrouper)
+        .groupby(ggrouper.to_xarray())
         .sum()
         .sum("snapshot")
     )
@@ -303,7 +303,7 @@ def add_EQ_constraints(n, o, scaling=1e-1):
         spillage = n.model["StorageUnit-spill"]
         lhs_spill = (
             (spillage * (-n.snapshot_weightings.stores * scaling))
-            .groupby(sgrouper)
+            .groupby(sgrouper.to_xarray())
             .sum()
             .sum("snapshot")
         )
@@ -573,24 +573,19 @@ def extra_functionality(n, snapshots):
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
 
-    # process "EQ" option only when model is based on a global CO2 atmosphere
     if config["co2_global_atmosphere"]:
         for o in opts:
             if "EQ" in o:
                 add_EQ_constraints(n, o)
                 break
+    else:
+        # add energy balance constraints where the supply (i.e. generators) must match exactly the demand (i.e. loads) in a per country basis
+        countries = config["co2_budget_per_country"].keys()
+        logger.info("Configure model with %d energy balance constraints equal to 1.0 in a per country basis" % len(countries))   # TODO: check if constraints should be applied in a per country or per local/node basis
+        add_EQ_constraints(n, "EQ1.0c")
 
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
-
-    # add local/nodal energy balance constraint when model is based on local/nodal CO2 atmospheres
-    if not config["co2_global_atmosphere"]:
-        for o in opts:
-            if "EQ" in o:
-                countries = config["co2_budget_per_country"].keys()
-                logger.info("Add %d local/nodal energy balance constraints" % len(n.buses.set_index("country").loc[countries]))
-                add_EQ_constraints(n, "EQ1.0")   # TODO: check that logic implemented in this function is correct/adequate to guarantee that supply (generators) matchs exactly the demand (loads) in each local/node
-                break
 
 
 def solve_network(n, config, opts="", **kwargs):
