@@ -60,7 +60,7 @@ def define_spatial(nodes, options):
 
     spatial.biomass = SimpleNamespace()
 
-    if options.get("biomass_spatial", options["biomass_transport"]) or not snakemake.config["co2_global_atmosphere"]:
+    if options.get("biomass_spatial", options["biomass_transport"]):
         spatial.biomass.nodes = nodes + " solid biomass"
         spatial.biomass.locations = nodes
         spatial.biomass.industry = nodes + " solid biomass for industry"
@@ -83,7 +83,7 @@ def define_spatial(nodes, options):
     else:
         spatial.co2.atmospheres = ["co2 atmosphere"]
 
-    if options["co2_spatial"] or not snakemake.config["co2_global_atmosphere"]:
+    if options["co2_spatial"]:
         spatial.co2.nodes = nodes + " co2 stored"
         spatial.co2.locations = nodes
         spatial.co2.vents = nodes + " co2 vent"
@@ -100,7 +100,7 @@ def define_spatial(nodes, options):
 
     spatial.gas = SimpleNamespace()
 
-    if options["gas_network"] or not snakemake.config["co2_global_atmosphere"]:
+    if options["gas_network"]:
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
         spatial.gas.biogas = nodes + " biogas"
@@ -3369,7 +3369,7 @@ def add_industry(n, costs):
     )
 
     sel = ["process emission", "process emission from feedstock"]
-    if options["co2_spatial"] or options["co2network"] or not snakemake.config["co2_global_atmosphere"]:
+    if options["co2_spatial"] or options["co2network"]:
         p_set = (
             -industrial_demand.loc[nodes, sel]
             .sum(axis=1)
@@ -3893,6 +3893,19 @@ if __name__ == "__main__":
         )
 
     logging.basicConfig(level=snakemake.config["logging"]["level"])
+
+
+
+    # enable CO2 spatial, H2 network, gas network and biomass spatial/transport in case CO2 atmosphere is not global (i.e. each node has a separated (local) CO2 atmosphere from remaining nodes)
+    if not snakemake.config["co2_global_atmosphere"]:
+        logger.info("Configure model with CO2 spatial, H2 network, gas network and biomass spatial/transport enabled given that CO2 atmosphere is local/nodal")
+        snakemake.config["sector"]["co2_spatial"] = True
+        snakemake.config["sector"]["H2_network"] = True
+        snakemake.config["sector"]["gas_network"] = True
+        snakemake.config["sector"]["biomass_spatial"] = True
+        snakemake.config["sector"]["biomass_transport"] = True
+
+
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
