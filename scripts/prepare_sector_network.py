@@ -785,11 +785,11 @@ def add_dac(n, costs):
            bus1 = spatial.co2.df.loc[locations, "nodes"].values,
            bus2 = locations.values,
            bus3 = heat_buses,
-           carrier = "DAC",   # TODO: check if separated (i.e. local/nodal) values are needed
+           carrier = "DAC",
            capital_cost = costs.at["direct air capture", "fixed"],
-           efficiency = 1.0,   # TODO: check if separated (i.e. local/nodal) values are needed
-           efficiency2 = efficiency2,   # TODO: check if separated (i.e. local/nodal) values are needed
-           efficiency3 = efficiency3,   # TODO: check if separated (i.e. local/nodal) values are needed
+           efficiency = 1.0,
+           efficiency2 = efficiency2,
+           efficiency3 = efficiency3,
            p_nom_extendable = True,
            lifetime = costs.at["direct air capture", "lifetime"]
           )
@@ -919,13 +919,13 @@ def add_generation(n, costs):
             logger.info("Configure model with %d '%s generator' links connected to the %d local/nodal 'CO2 atmosphere' buses" % (len(nodes), generator, len(spatial.co2.atmospheres)))
         n.madd("Link",
                nodes + " " + generator,
-               bus0 = carrier_nodes,   # TODO: check if separated (i.e. local/nodal) values are needed
-               bus1 = nodes,   # TODO: check if separated (i.e. local/nodal) values are needed
+               bus0 = carrier_nodes,
+               bus1 = nodes,
                bus2 = spatial.co2.atmospheres,
                marginal_cost = costs.at[generator, "efficiency"] * costs.at[generator, "VOM"], #NB: VOM is per MWel
                capital_cost = costs.at[generator, "efficiency"] * costs.at[generator, "fixed"], #NB: fixed cost is per MWel
                p_nom_extendable = True,
-               carrier = generator,   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = generator,
                efficiency = costs.at[generator, "efficiency"],
                efficiency2 = costs.at[carrier, "CO2 intensity"],
                lifetime = costs.at[generator, "lifetime"]
@@ -1526,14 +1526,14 @@ def add_storage_and_grids(n, costs):
         n.madd("Link",
                spatial.nodes,
                suffix = " coal CC",
-               bus0 = spatial.coal.nodes,   # TODO: check if separated (i.e. local/nodal) values are needed
+               bus0 = spatial.coal.nodes,
                bus1 = spatial.nodes,
                bus2 = spatial.co2.atmospheres,
                bus3 = spatial.co2.nodes,
                marginal_cost = costs.at["coal", "efficiency"] * costs.at["coal", "VOM"], #NB: VOM is per MWel
                capital_cost = costs.at["coal", "efficiency"] * costs.at["coal", "fixed"] + costs.at["biomass CHP capture", "fixed"] * costs.at["coal", "CO2 intensity"], #NB: fixed cost is per MWel
                p_nom_extendable = True,
-               carrier = "coal",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "coal",
                efficiency = costs.at["coal", "efficiency"],
                efficiency2 = costs.at["coal", "CO2 intensity"] * (1 - costs.at["biomass CHP capture", "capture_rate"]),
                efficiency3 = costs.at["coal", "CO2 intensity"] * costs.at["biomass CHP capture", "capture_rate"],
@@ -1571,7 +1571,7 @@ def add_storage_and_grids(n, costs):
                bus2 = spatial.co2.atmospheres,
                bus3 = spatial.co2.nodes,
                p_nom_extendable = True,
-               carrier = "SMR CC",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "SMR CC",
                efficiency = costs.at["SMR CC", "efficiency"],
                efficiency2 = costs.at["gas", "CO2 intensity"] * (1 - options["cc_fraction"]),
                efficiency3 = costs.at["gas", "CO2 intensity"] * options["cc_fraction"],
@@ -1604,7 +1604,7 @@ def add_storage_and_grids(n, costs):
                bus1 = nodes + " H2",
                bus2 = spatial.co2.atmospheres,
                p_nom_extendable = True,
-               carrier = "SMR",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "SMR",
                efficiency = costs.at["SMR", "efficiency"],
                efficiency2 = costs.at["gas", "CO2 intensity"],
                capital_cost = costs.at["SMR", "fixed"],
@@ -1795,7 +1795,7 @@ def add_land_transport(n, costs):
             n.madd("Load",
                    spatial.nodes + " land transport oil emissions",
                    bus = spatial.co2.atmospheres,
-                   carrier = "land transport oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = "land transport oil emissions",
                    p_set = -co2
                   )
 
@@ -2069,7 +2069,7 @@ def add_heat(n, costs):
                    bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
                    bus1 = nodes[name] + f" {name} heat",
                    bus2 = spatial.co2.atmospheres,
-                   carrier = name + " gas boiler",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = name + " gas boiler",
                    efficiency = costs.at[key, "efficiency"],
                    efficiency2 = costs.at["gas", "CO2 intensity"],
                    capital_cost = costs.at[key, "efficiency"] * costs.at[key, "fixed"],
@@ -2123,7 +2123,7 @@ def add_heat(n, costs):
                    bus1 = nodes[name],
                    bus2 = nodes[name] + " urban central heat",
                    bus3 = spatial.co2.atmospheres,
-                   carrier = "urban central gas CHP",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = "urban central gas CHP",
                    p_nom_extendable = True,
                    capital_cost = costs.at["central gas CHP", "fixed"] * costs.at["central gas CHP", "efficiency"],
                    marginal_cost = costs.at["central gas CHP", "VOM"],
@@ -2181,7 +2181,7 @@ def add_heat(n, costs):
                    bus2 = nodes[name] + " urban central heat",
                    bus3 = spatial.co2.atmospheres,
                    bus4 = spatial.co2.df.loc[nodes[name], "nodes"].values,
-                   carrier = "urban central gas CHP CC",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = "urban central gas CHP CC",
                    p_nom_extendable = True,
                    capital_cost = costs.at["central gas CHP", "fixed"] * costs.at["central gas CHP", "efficiency"] + costs.at["biomass CHP capture", "fixed"] * costs.at["gas", "CO2 intensity"],
                    marginal_cost = costs.at["central gas CHP", "VOM"],
@@ -2221,7 +2221,7 @@ def add_heat(n, costs):
                    bus1 = nodes[name],
                    bus2 = nodes[name] + f" {name} heat",
                    bus3 = spatial.co2.atmospheres,
-                   carrier = name + " micro gas CHP",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = name + " micro gas CHP",
                    efficiency = costs.at["micro CHP", "efficiency"],
                    efficiency2 = costs.at["micro CHP", "efficiency-heat"],
                    efficiency3 = costs.at["gas", "CO2 intensity"],
@@ -2458,7 +2458,7 @@ def add_biomass(n, costs):
            bus0 = spatial.gas.biogas,
            bus1 = spatial.gas.nodes,
            bus2 = spatial.co2.atmospheres,
-           carrier = "biogas to gas",   # TODO: check if separated (i.e. local/nodal) values are needed
+           carrier = "biogas to gas",
            capital_cost = costs.loc["biogas upgrading", "fixed"],
            marginal_cost = costs.loc["biogas upgrading", "VOM"],
            efficiency2 = -costs.at["gas", "CO2 intensity"],
@@ -2563,7 +2563,7 @@ def add_biomass(n, costs):
                bus2 = urban_central + " urban central heat",
                bus3 = spatial.co2.atmospheres,
                bus4 = spatial.co2.df.loc[urban_central, "nodes"].values,
-               carrier = "urban central solid biomass CHP CC",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "urban central solid biomass CHP CC",
                p_nom_extendable = True,
                capital_cost = costs.at[key, "fixed"] * costs.at[key, "efficiency"] + costs.at["biomass CHP capture", "fixed"] * costs.at["solid biomass", "CO2 intensity"],
                marginal_cost = costs.at[key, "VOM"],
@@ -2624,9 +2624,9 @@ def add_biomass(n, costs):
                spatial.biomass.nodes,
                suffix = " biomass to liquid",
                bus0 = spatial.biomass.nodes,
-               bus1 = spatial.oil.nodes,   # TODO: check if separated (i.e. local/nodal) values are needed
+               bus1 = spatial.oil.nodes,
                bus2 = spatial.co2.atmospheres,
-               carrier = "biomass to liquid",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "biomass to liquid",
                lifetime = costs.at["BtL", "lifetime"],
                efficiency = costs.at["BtL", "efficiency"],
                efficiency2 = -costs.at["solid biomass", "CO2 intensity"] + costs.at["BtL", "CO2 stored"],
@@ -2665,10 +2665,10 @@ def add_biomass(n, costs):
                spatial.biomass.nodes,
                suffix = " biomass to liquid CC",
                bus0 = spatial.biomass.nodes,
-               bus1 = spatial.oil.nodes,   # TODO: check if separated (i.e. local/nodal) values are needed
+               bus1 = spatial.oil.nodes,
                bus2 = spatial.co2.atmospheres,
                bus3 = spatial.co2.nodes,
-               carrier = "biomass to liquid",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "biomass to liquid",
                lifetime = costs.at["BtL", "lifetime"],
                efficiency = costs.at["BtL", "efficiency"],
                efficiency2 = -costs.at["solid biomass", "CO2 intensity"] + costs.at["BtL", "CO2 stored"] * (1 - costs.at["BtL", "capture rate"]),
@@ -2708,7 +2708,7 @@ def add_biomass(n, costs):
                bus0 = spatial.biomass.nodes,
                bus1 = spatial.gas.nodes,
                bus3 = spatial.co2.atmospheres,
-               carrier = "BioSNG",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "BioSNG",
                lifetime = costs.at["BioSNG", "lifetime"],
                efficiency = costs.at["BioSNG", "efficiency"],
                efficiency3 = -costs.at["solid biomass", "CO2 intensity"] + costs.at["BioSNG", "CO2 stored"],
@@ -2753,7 +2753,7 @@ def add_biomass(n, costs):
                bus1 = spatial.gas.nodes,
                bus2 = spatial.co2.nodes,
                bus3 = spatial.co2.atmospheres,
-               carrier = "BioSNG",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "BioSNG",
                lifetime = costs.at["BioSNG", "lifetime"],
                efficiency = costs.at["BioSNG", "efficiency"],
                efficiency2 = costs.at["BioSNG", "CO2 stored"] * costs.at["BioSNG", "capture rate"],
@@ -2842,7 +2842,7 @@ def add_industry(n, costs):
            bus1 = spatial.biomass.industry,
            bus2 = spatial.co2.atmospheres,
            bus3 = spatial.co2.nodes,
-           carrier = "solid biomass for industry CC",   # TODO: check if separated (i.e. local/nodal) values are needed
+           carrier = "solid biomass for industry CC",
            p_nom_extendable = True,
            capital_cost = costs.at["cement capture", "fixed"] * costs.at["solid biomass", "CO2 intensity"],
            efficiency = 0.9,  # TODO: make config option
@@ -2896,7 +2896,7 @@ def add_industry(n, costs):
            bus0 = spatial.gas.nodes,
            bus1 = spatial.gas.industry,
            bus2 = spatial.co2.atmospheres,
-           carrier = "gas for industry",   # TODO: check if separated (i.e. local/nodal) values are needed
+           carrier = "gas for industry",
            p_nom_extendable = True,
            efficiency = 1.0,
            efficiency2 = costs.at["gas", "CO2 intensity"]
@@ -2932,7 +2932,7 @@ def add_industry(n, costs):
            bus1 = spatial.gas.industry,
            bus2 = spatial.co2.atmospheres,
            bus3 = spatial.co2.nodes,
-           carrier = "gas for industry CC",   # TODO: check if separated (i.e. local/nodal) values are needed
+           carrier = "gas for industry CC",
            p_nom_extendable = True,
            capital_cost = costs.at["cement capture", "fixed"] * costs.at["gas", "CO2 intensity"],
            efficiency = 0.9,
@@ -3099,7 +3099,7 @@ def add_industry(n, costs):
             n.madd("Load",
                    spatial.nodes + " shipping methanol emissions",
                    bus = spatial.co2.atmospheres,
-                   carrier = "shipping methanol emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = "shipping methanol emissions",
                    p_set = -co2.values
                   )
 
@@ -3142,7 +3142,7 @@ def add_industry(n, costs):
             n.madd("Load",
                    spatial.nodes + " shipping oil emissions",
                    bus = spatial.co2.atmospheres,
-                   carrier = "shipping oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = "shipping oil emissions",
                    p_set = -co2.values
                   )
 
@@ -3210,10 +3210,10 @@ def add_industry(n, costs):
             n.madd("Link",
                    nodes_heat[name] + f" {name} oil boiler",
                    p_nom_extendable = True,
-                   bus0 = spatial.oil.nodes,   # TODO: check if separated (i.e. local/nodal) values are needed
+                   bus0 = spatial.oil.nodes,
                    bus1 = nodes_heat[name] + f" {name}  heat",
                    bus2 = spatial.co2.atmospheres,
-                   carrier = f"{name} oil boiler",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = f"{name} oil boiler",
                    efficiency = costs.at["decentral oil boiler", "efficiency"],
                    efficiency2 = costs.at["oil", "CO2 intensity"],
                    capital_cost = costs.at["decentral oil boiler", "efficiency"] * costs.at["decentral oil boiler", "fixed"],
@@ -3316,7 +3316,7 @@ def add_industry(n, costs):
         n.madd("Load",
                spatial.nodes + " oil emissions",
                bus = spatial.co2.atmospheres,
-               carrier = "oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
+               carrier = "oil emissions",
                p_set = -co2.values
               )
 
@@ -3409,7 +3409,7 @@ def add_industry(n, costs):
            spatial.co2.process_emissions,
            bus0 = spatial.co2.process_emissions,
            bus1 = spatial.co2.atmospheres,
-           carrier = "process emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
+           carrier = "process emissions",
            p_nom_extendable = True,
            efficiency = 1.0
           )
@@ -3441,7 +3441,7 @@ def add_industry(n, costs):
            bus0 = spatial.co2.process_emissions,
            bus1 = spatial.co2.atmospheres,
            bus2 = spatial.co2.nodes,
-           carrier = "process emissions CC",   # TODO: check if separated (i.e. local/nodal) values are needed
+           carrier = "process emissions CC",
            p_nom_extendable = True,
            capital_cost = costs.at["cement capture", "fixed"],
            efficiency = 1 - costs.at["cement capture", "capture_rate"],
@@ -3616,7 +3616,7 @@ def add_agriculture(n, costs):
             n.madd("Load",
                    spatial.nodes + " agriculture machinery oil emissions",
                    bus = spatial.co2.atmospheres,
-                   carrier = "agriculture machinery oil emissions",   # TODO: check if separated (i.e. local/nodal) values are needed
+                   carrier = "agriculture machinery oil emissions",
                    p_set = -co2.values
                   )
 
