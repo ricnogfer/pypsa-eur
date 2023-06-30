@@ -140,8 +140,14 @@ def define_spatial(nodes, options):
 
     # methanol
     spatial.methanol = SimpleNamespace()
-    spatial.methanol.nodes = ["EU methanol"]
-    spatial.methanol.locations = ["EU"]
+
+    # TODO: check if methanol should be split (when working with local/nodal CO2 atmospheres) - otherwise, if not split, the shipping emissions will be global when specifying the load attached to it (see line #3073)
+    if not snakemake.config["co2_global_atmosphere"]:
+        spatial.methanol.nodes = nodes + " methanol"
+        spatial.methanol.locations = nodes
+    else:
+        spatial.methanol.nodes = ["EU methanol"]
+        spatial.methanol.locations = ["EU"]
 
     # oil
     spatial.oil = SimpleNamespace()
@@ -617,15 +623,13 @@ def add_co2_tracking(n, options):
     if snakemake.config["co2_global_atmosphere"]:
         logger.info("Configure model with a global 'CO2 stored' bus")
         location = spatial.co2.locations
-        carrier = "co2 stored"
     else:
         logger.info("Configure model with %d local/nodal 'CO2 stored' buses" % len(spatial.co2.nodes))
         location = spatial.co2.locations.str[:2]
-        carrier = spatial.nodes + " co2 stored"
     n.madd("Bus",
            spatial.co2.nodes,
            location = location,
-           carrier = carrier,   # TODO: it should be "co2 stored" but, somehow, if one sets the carrier that way the solver will not reach to a solution afterwards
+           carrier = "co2 stored",
            unit = "t_co2"
           )
 
@@ -3061,8 +3065,10 @@ def add_industry(n, costs):
 
         if snakemake.config["co2_global_atmosphere"]:
             p_set_methanol = shipping_methanol_share * p_set.sum() * efficiency
+            load_shipping_methanol_p_set = p_set_methanol
         else:
             p_set_methanol = shipping_methanol_share * p_set * efficiency
+            load_shipping_methanol_p_set = p_set_methanol.values
 
         n.madd(
             "Load",
@@ -3070,7 +3076,7 @@ def add_industry(n, costs):
             suffix=" shipping methanol",
             bus=spatial.methanol.nodes,
             carrier="shipping methanol",
-            p_set=p_set_methanol,
+            p_set=load_shipping_methanol_p_set
         )
 
         # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh
