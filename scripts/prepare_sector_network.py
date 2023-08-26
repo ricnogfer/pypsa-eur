@@ -141,7 +141,6 @@ def define_spatial(nodes, options):
     # methanol
     spatial.methanol = SimpleNamespace()
 
-    # TODO: check if methanol should be split (when working with local/nodal CO2 atmospheres) - otherwise, if not split, the shipping emissions will be global when specifying the load attached to it (see line #3073)
     if not snakemake.config["co2_global_atmosphere"]:
         spatial.methanol.nodes = nodes + " methanol"
         spatial.methanol.locations = nodes
@@ -3065,10 +3064,10 @@ def add_industry(n, costs):
 
         if snakemake.config["co2_global_atmosphere"]:
             p_set_methanol = shipping_methanol_share * p_set.sum() * efficiency
-            load_shipping_methanol_p_set = p_set_methanol
+            p_set_load_shipping_methanol = p_set_methanol
         else:
             p_set_methanol = shipping_methanol_share * p_set * efficiency
-            load_shipping_methanol_p_set = p_set_methanol.values
+            p_set_load_shipping_methanol = p_set_methanol.values
 
         n.madd(
             "Load",
@@ -3076,7 +3075,7 @@ def add_industry(n, costs):
             suffix=" shipping methanol",
             bus=spatial.methanol.nodes,
             carrier="shipping methanol",
-            p_set=load_shipping_methanol_p_set
+            p_set=p_set_load_shipping_methanol
         )
 
         # CO2 intensity methanol based on stoichiometric calculation with 22.7 GJ/t methanol (32 g/mol), CO2 (44 g/mol), 277.78 MWh/TJ = 0.218 t/MWh

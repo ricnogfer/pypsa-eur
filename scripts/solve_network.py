@@ -572,18 +572,9 @@ def extra_functionality(n, snapshots):
     reserve = config["electricity"].get("operational_reserve", {})
     if reserve.get("activate"):
         add_operational_reserve_margin(n, snapshots, config)
-
-    if config["co2_global_atmosphere"]:
-        for o in opts:
-            if "EQ" in o:
-                add_EQ_constraints(n, o)
-                break
-    else:
-        # add energy balance constraints where the supply (i.e. generators) must match exactly the demand (i.e. loads) in a per country basis
-        countries = config["co2_budget_per_country"].keys()
-        logger.info("Configure model with %d energy balance constraints equal to 1.0 in a per country basis" % len(countries))   # TODO: check if constraints should be applied in a per country or per local/node basis
-        add_EQ_constraints(n, "EQ1.0c")
-
+    for o in opts:
+        if "EQ" in o:
+            add_EQ_constraints(n, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
 
