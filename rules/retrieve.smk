@@ -4,8 +4,8 @@
 
 
 
-# enable CO2 spatial, H2 network, gas network and biomass spatial/transport in case CO2 atmosphere is not global (i.e. each node has a separated (local) CO2 atmosphere from remaining nodes)
-if not config["co2_global_atmosphere"]:
+# enable CO2 spatial, H2 network, gas network and biomass spatial/transport in case CO2 atmosphere is local (i.e. each node has a separated (local) CO2 atmosphere from remaining nodes)
+if config["co2_local_atmosphere"]:
     config["sector"]["co2_spatial"] = True
     config["sector"]["H2_network"] = True
     config["sector"]["gas_network"] = True
