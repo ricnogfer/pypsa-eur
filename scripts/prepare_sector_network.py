@@ -1790,7 +1790,7 @@ def add_land_transport(n, costs):
                    spatial.nodes + " land transport oil emissions",
                    bus = spatial.co2.atmospheres,
                    carrier = "land transport oil emissions",
-                   p_set = -co2
+                   p_set = -co2.values
                   )
         else:
             logger.info("Configure model with a 'land transport oil emissions' load attached to the global 'CO2 atmosphere' bus")
