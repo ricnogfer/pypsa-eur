@@ -576,6 +576,9 @@ def add_co2_tracking(n, options):
       # read CSV file containing disparate industries/services CO2 emissions (in megatonnes)
       co2_emissions = pd.read_csv(snakemake.input.co2_totals_name, index_col = 0)
 
+      # select CO2 emissions in function of the specified sectors
+      co2_emissions = co2_emissions.loc[list(snakemake.config["co2_budget_per_country"]), emission_sectors_from_opts(snakemake.wildcards.sector_opts)]
+
       # sum disparate industries/services CO2 emissions per country (in tonnes)
       co2_emissions_per_country = co2_emissions.sum(axis = 1) * 1e6
 
