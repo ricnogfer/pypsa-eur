@@ -1785,7 +1785,6 @@ def add_land_transport(n, costs):
             p_set=-co2,
         )
         """
-        # INFO: the logic concerning "land transport oil emissions" is correct
         if snakemake.config["co2_local_atmosphere"]:
             logger.info("Configure model with %d 'land transport oil emissions' loads attached to the %d local/nodal 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres)))
             co2 = ice_share / ice_efficiency * transport[nodes].sum() / nhours * costs.at["oil", "CO2 intensity"]
@@ -3093,7 +3092,6 @@ def add_industry(n, costs):
             p_set=-co2,
         )
         """
-        # INFO: the logic concerning "shipping methanol emissions" is correct
         if snakemake.config["co2_local_atmosphere"]:
             logger.info("Configure model with %d 'shipping methanol emissions' load attached to the %d local/nodal 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres)))
             n.madd("Load",
@@ -3134,7 +3132,6 @@ def add_industry(n, costs):
             p_set=-co2,
         )
         """
-        # INFO: the logic concerning "shipping oil emissions" is correct
         if snakemake.config["co2_local_atmosphere"]:
             logger.info("Configure model with %d 'shipping oil emissions' loads attached to the %d local/nodal 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres)))
             co2 = shipping_oil_share * p_set * costs.at["oil", "CO2 intensity"]
@@ -3295,7 +3292,6 @@ def add_industry(n, costs):
         p_set=-co2,
     )
     """
-    # INFO: the logic concerning "oil emissions" is correct
     if snakemake.config["co2_local_atmosphere"]:
         logger.info("Configure model with %d 'oil emissions' loads attached to the %d local/nodal 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres)))
 
@@ -3408,7 +3404,6 @@ def add_industry(n, costs):
         efficiency=1.0,
     )
     """
-    # INFO: the logic concerning "process emissions" is correct
     if snakemake.config["co2_local_atmosphere"]:
         logger.info("Configure model with %d 'process emissions' links connected to the %d local/nodal 'CO2 atmosphere' buses" % (len(spatial.co2.process_emissions), len(spatial.co2.atmospheres)))
     else:
@@ -3608,7 +3603,6 @@ def add_agriculture(n, costs):
             p_set=-co2,
         )
         """
-        # INFO: the logic concerning "agriculture machinery oil emissions" is correct
         if snakemake.config["co2_local_atmosphere"]:
             logger.info("Configure model with %d 'agriculture machinery oil emissions' loads attached to the %d local/nodal 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres)))
             co2 = oil_share * machinery_nodal_energy * 1e6 / nhours * costs.at["oil", "CO2 intensity"]
@@ -3885,6 +3879,56 @@ def set_temporal_aggregation(n, opts, solver_name):
     return n
 
 
+def lossy_bidirectional_links(n, carrier, efficiencies={}):
+    "Split bidirectional links into two unidirectional links to include transmission losses."
+
+    carrier_i = n.links.query("carrier == @carrier").index
+
+    if (
+        not any((v != 1.0) or (v >= 0) for v in efficiencies.values())
+        or carrier_i.empty
+    ):
+        return
+
+    efficiency_static = efficiencies.get("efficiency_static", 1)
+    efficiency_per_1000km = efficiencies.get("efficiency_per_1000km", 1)
+    compression_per_1000km = efficiencies.get("compression_per_1000km", 0)
+
+    logger.info(
+        f"Specified losses for {carrier} transmission "
+        f"(static: {efficiency_static}, per 1000km: {efficiency_per_1000km}, compression per 1000km: {compression_per_1000km}). "
+        "Splitting bidirectional links."
+    )
+
+    n.links.loc[carrier_i, "p_min_pu"] = 0
+    n.links.loc[carrier_i, "efficiency"] = (
+        efficiency_static
+        * efficiency_per_1000km ** (n.links.loc[carrier_i, "length"] / 1e3)
+    )
+    rev_links = (
+        n.links.loc[carrier_i].copy().rename({"bus0": "bus1", "bus1": "bus0"}, axis=1)
+    )
+    rev_links["length_original"] = rev_links["length"]
+    rev_links["capital_cost"] = 0
+    rev_links["length"] = 0
+    rev_links["reversed"] = True
+    rev_links.index = rev_links.index.map(lambda x: x + "-reversed")
+
+    n.links = pd.concat([n.links, rev_links], sort=False)
+    n.links["reversed"] = n.links["reversed"].fillna(False)
+    n.links["length_original"] = n.links["length_original"].fillna(n.links.length)
+
+    # do compression losses after concatenation to take electricity consumption at bus0 in either direction
+    carrier_i = n.links.query("carrier == @carrier").index
+    if compression_per_1000km > 0:
+        n.links.loc[carrier_i, "bus2"] = n.links.loc[carrier_i, "bus0"].map(
+            n.buses.location
+        )  # electricity
+        n.links.loc[carrier_i, "efficiency2"] = (
+            -compression_per_1000km * n.links.loc[carrier_i, "length_original"] / 1e3
+        )
+
+
 if __name__ == "__main__":
     if "snakemake" not in globals():
         from _helpers import mock_snakemake
@@ -4058,6 +4102,9 @@ if __name__ == "__main__":
 
     if options["electricity_grid_connection"]:
         add_electricity_grid_connection(n, costs)
+
+    for k, v in options["transmission_efficiency"].items():
+        lossy_bidirectional_links(n, k, v)
 
     first_year_myopic = (snakemake.config["foresight"] == "myopic") and (
         snakemake.config["scenario"]["planning_horizons"][0] == investment_year
