@@ -82,8 +82,7 @@ def define_spatial(nodes, options):
     if snakemake.config["co2_atmosphere"] == "global":
         spatial.co2.atmospheres = ["co2 atmosphere"]
     elif snakemake.config["co2_atmosphere"] == "local":
-        spatial.co2.atmospheres = nodes + " co2 atmosphere"
-        spatial.co2.local_atmospheres = nodes.str[:2] + " co2 atmosphere"
+        spatial.co2.atmospheres = nodes.str[:2] + " co2 atmosphere"
     else:   # nodal
         spatial.co2.atmospheres = nodes + " co2 atmosphere"
 
@@ -555,7 +554,7 @@ def add_co2_tracking(n, options):
               unit = "t_co2"
              )
     elif snakemake.config["co2_atmosphere"] == "local":
-        co2_atmospheres_unique = spatial.co2.local_atmospheres.unique()
+        co2_atmospheres_unique = spatial.co2.atmospheres.unique()
         logger.info("Configure model with %d local 'CO2 atmosphere' buses" % len(co2_atmospheres_unique))
         n.madd("Bus",
                co2_atmospheres_unique,
@@ -593,7 +592,7 @@ def add_co2_tracking(n, options):
               bus = spatial.co2.atmospheres[0]
              )
     elif snakemake.config["co2_atmosphere"] == "local":
-        co2_atmospheres_unique = spatial.co2.local_atmospheres.unique()
+        co2_atmospheres_unique = spatial.co2.atmospheres.unique()
 
         logger.info("Configure model with %d 'CO2 atmosphere' stores attached to the %d local 'CO2 atmosphere' buses" % (len(co2_atmospheres_unique), len(co2_atmospheres_unique)))
 
@@ -646,7 +645,7 @@ def add_co2_tracking(n, options):
               country = atmosphere[:2]
               node = atmosphere[:5]
               fraction = pop_layout.loc[node]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
-              e_nom = co2_emissions_per_country[country] * fraction * co2_budget_per_country[country]
+              e_nom = co2_emissions_per_country[country] * co2_budget_per_country[country] * fraction
 
               # add store to nodal CO2 atmosphere
               n.add("Store",
@@ -728,17 +727,14 @@ def add_co2_tracking(n, options):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d global 'CO2 vent' links connected to the global 'CO2 atmosphere' bus" % len(spatial.co2.vents))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'CO2 vent' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.co2.vents), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'CO2 vent' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.co2.vents), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
-            logger.info("Configure model with %d 'CO2 vent' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.co2.vents), len(spatial.co2_atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
+            logger.info("Configure model with %d 'CO2 vent' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.co2.vents), len(spatial.co2.atmospheres)))
         n.madd("Link",
                spatial.co2.vents,
                bus0 = spatial.co2.nodes,
-               bus1 = co2_atmospheres,
+               bus1 = spatial.co2.atmospheres,
                carrier = "co2 vent",
                efficiency = 1.0,
                p_nom_extendable = True
@@ -832,10 +828,10 @@ def add_dac(n, costs):
         logger.info("Configure model with %d 'DAC' links connected to the global 'CO2 atmosphere' bus" % len(heat_buses))
         co2_atmospheres = spatial.co2.atmospheres[0]
     elif snakemake.config["co2_atmosphere"] == "local":
-        logger.info("Configure model with %d 'DAC' links connected to the %d local 'CO2 atmosphere' buses" % (len(heat_buses), len(spatial.co2.local_atmospheres.unique())))
-        co2_atmospheres = spatial.co2.local_atmospheres
-        for i in range(int(len(spatial.co2.df.loc[locations, "nodes"].values) / len(spatial.co2.local_atmospheres)) - 1):
-            co2_atmospheres = co2_atmospheres.append(spatial.co2.local_atmospheres)
+        logger.info("Configure model with %d 'DAC' links connected to the %d local 'CO2 atmosphere' buses" % (len(heat_buses), len(spatial.co2.atmospheres.unique())))
+        co2_atmospheres = spatial.co2.atmospheres
+        for i in range(int(len(spatial.co2.df.loc[locations, "nodes"].values) / len(spatial.co2.atmospheres)) - 1):
+            co2_atmospheres = co2_atmospheres.append(spatial.co2.atmospheres)
     else:   # nodal
         logger.info("Configure model with %d 'DAC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(heat_buses), len(spatial.co2.atmospheres)))
         co2_atmospheres = spatial.co2.atmospheres
@@ -977,18 +973,15 @@ def add_generation(n, costs):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d '%s generator' links connected to the global 'CO2 atmosphere' bus" % (len(nodes), generator))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d '%s generator' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes), generator, len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d '%s generator' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes), generator, len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d '%s generator' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(nodes), generator, len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                nodes + " " + generator,
                bus0 = carrier_nodes,
                bus1 = nodes,
-               bus2 = co2_atmospheres,
+               bus2 = spatial.co2.atmospheres,
                marginal_cost = costs.at[generator, "efficiency"] * costs.at[generator, "VOM"], #NB: VOM is per MWel
                capital_cost = costs.at[generator, "efficiency"] * costs.at[generator, "fixed"], #NB: fixed cost is per MWel
                p_nom_extendable = True,
@@ -1588,19 +1581,16 @@ def add_storage_and_grids(n, costs):
         # TODO: understand why it gives "WARNING:pypsa.io:The following Link have buses which are not defined" (it happens with original code too)
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d 'coal CC' links connected to the global 'CO2 atmosphere' bus" % len(spatial.nodes))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'coal CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'coal CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'coal CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                spatial.nodes,
                suffix = " coal CC",
                bus0 = spatial.coal.nodes,
                bus1 = spatial.nodes,
-               bus2 = co2_atmospheres,
+               bus2 = spatial.co2.atmospheres,
                bus3 = spatial.co2.nodes,
                marginal_cost = costs.at["coal", "efficiency"] * costs.at["coal", "VOM"], #NB: VOM is per MWel
                capital_cost = costs.at["coal", "efficiency"] * costs.at["coal", "fixed"] + costs.at["biomass CHP capture", "fixed"] * costs.at["coal", "CO2 intensity"], #NB: fixed cost is per MWel
@@ -1633,19 +1623,16 @@ def add_storage_and_grids(n, costs):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d 'SMR CC' links connected to the global 'CO2 atmosphere' bus" % len(spatial.nodes))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'SMR CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'SMR CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'SMR CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                spatial.nodes,
                suffix = " SMR CC",
                bus0 = spatial.gas.nodes,
                bus1 = nodes + " H2",
-               bus2 = co2_atmospheres,
+               bus2 = spatial.co2.atmospheres,
                bus3 = spatial.co2.nodes,
                p_nom_extendable = True,
                carrier = "SMR CC",
@@ -1673,18 +1660,15 @@ def add_storage_and_grids(n, costs):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d 'SMR' links connected to the global 'CO2 atmosphere' bus" % len(nodes))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'SMR' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'SMR' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'SMR' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(nodes), len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                nodes + " SMR",
                bus0 = spatial.gas.nodes,
                bus1 = nodes + " H2",
-               bus2 = co2_atmospheres,
+               bus2 = spatial.co2.atmospheres,
                p_nom_extendable = True,
                carrier = "SMR",
                efficiency = costs.at["SMR", "efficiency"],
@@ -1871,11 +1855,11 @@ def add_land_transport(n, costs):
                   p_set = -co2
                  )
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'land transport oil emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.local_atmospheres.unique())))
+            logger.info("Configure model with %d 'land transport oil emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres.unique())))
             co2 = ice_share / ice_efficiency * transport[nodes].sum() / nhours * costs.at["oil", "CO2 intensity"]
             n.madd("Load",
                    spatial.nodes + " land transport oil emissions",
-                   bus = spatial.co2.local_atmospheres,
+                   bus = spatial.co2.atmospheres,
                    carrier = "land transport oil emissions",
                    p_set = -co2.values
                   )
@@ -2151,19 +2135,16 @@ def add_heat(n, costs):
             """
             if snakemake.config["co2_atmosphere"] == "global":
                 logger.info("Configure model with %d '%s gas boiler' links connected to the global 'CO2 atmosphere' bus" % (len(nodes[name]), name))
-                co2_atmospheres = spatial.co2.atmospheres
             elif snakemake.config["co2_atmosphere"] == "local":
-                logger.info("Configure model with %d '%s gas boiler' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes[name]), name, len(spatial.co2.local_atmospheres.unique())))
-                co2_atmospheres = spatial.co2.local_atmospheres
+                logger.info("Configure model with %d '%s gas boiler' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes[name]), name, len(spatial.co2.atmospheres.unique())))
             else:   # nodal
                 logger.info("Configure model with %d '%s gas boiler' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(nodes[name]), name, len(spatial.co2.atmospheres)))
-                co2_atmospheres = spatial.co2.atmospheres
             n.madd("Link",
                    nodes[name] + f" {name} gas boiler",
                    p_nom_extendable = True,
                    bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
                    bus1 = nodes[name] + f" {name} heat",
-                   bus2 = co2_atmospheres,
+                   bus2 = spatial.co2.atmospheres,
                    carrier = name + " gas boiler",
                    efficiency = costs.at[key, "efficiency"],
                    efficiency2 = costs.at["gas", "CO2 intensity"],
@@ -2210,19 +2191,16 @@ def add_heat(n, costs):
             """
             if snakemake.config["co2_atmosphere"] == "global":
                 logger.info("Configure model with %d 'urban central gas CHP' links connected to the global 'CO2 atmosphere' bus" % len(nodes[name]))
-                co2_atmospheres = spatial.co2.atmospheres
             elif snakemake.config["co2_atmosphere"] == "local":
-                logger.info("Configure model with %d 'urban central gas CHP' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes[name]), len(spatial.co2.local_atmospheres.unique())))
-                co2_atmospheres = spatial.co2.local_atmospheres
+                logger.info("Configure model with %d 'urban central gas CHP' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes[name]), len(spatial.co2.atmospheres.unique())))
             else:   # nodal
                 logger.info("Configure model with %d 'urban central gas CHP' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(nodes[name]), len(spatial.co2.atmospheres)))
-                co2_atmospheres = spatial.co2.atmospheres
             n.madd("Link",
                    nodes[name] + " urban central gas CHP",
                    bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
                    bus1 = nodes[name],
                    bus2 = nodes[name] + " urban central heat",
-                   bus3 = co2_atmospheres,
+                   bus3 = spatial.co2.atmospheres,
                    carrier = "urban central gas CHP",
                    p_nom_extendable = True,
                    capital_cost = costs.at["central gas CHP", "fixed"] * costs.at["central gas CHP", "efficiency"],
@@ -2272,19 +2250,16 @@ def add_heat(n, costs):
             """
             if snakemake.config["co2_atmosphere"] == "global":
                 logger.info("Configure model with %d 'urban central gas CHP CC' links connected to the global 'CO2 atmosphere' bus" % len(nodes[name]))
-                co2_atmospheres = spatial.co2.atmospheres
             elif snakemake.config["co2_atmosphere"] == "local":
-                logger.info("Configure model with %d 'urban central gas CHP CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes[name]), len(spatial.co2.local_atmospheres.unique())))
-                co2_atmospheres = spatial.co2.local_atmospheres
+                logger.info("Configure model with %d 'urban central gas CHP CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes[name]), len(spatial.co2.atmospheres.unique())))
             else:   # nodal
                 logger.info("Configure model with %d 'urban central gas CHP CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(nodes[name]), len(spatial.co2.atmospheres)))
-                co2_atmospheres = spatial.co2.atmospheres
             n.madd("Link",
                    nodes[name] + " urban central gas CHP CC",
                    bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
                    bus1 = nodes[name],
                    bus2 = nodes[name] + " urban central heat",
-                   bus3 = co2_atmospheres,
+                   bus3 = spatial.co2.atmospheres,
                    bus4 = spatial.co2.df.loc[nodes[name], "nodes"].values,
                    carrier = "urban central gas CHP CC",
                    p_nom_extendable = True,
@@ -2317,20 +2292,17 @@ def add_heat(n, costs):
             """
             if snakemake.config["co2_atmosphere"] == "global":
                 logger.info("Configure model with %d '%s micro gas CHP' links connected to the global 'CO2 atmosphere' bus" % (len(nodes[name]), name))
-                co2_atmospheres = spatial.co2.atmospheres
             elif snakemake.config["co2_atmosphere"] == "local":
-                logger.info("Configure model with %d '%s micro gas CHP' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes[name]), name, len(spatial.co2.local_atmospheres.unique())))
-                co2_atmospheres = spatial.co2.local_atmospheres
+                logger.info("Configure model with %d '%s micro gas CHP' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes[name]), name, len(spatial.co2.atmospheres.unique())))
             else:   # nodal
                 logger.info("Configure model with %d '%s micro gas CHP' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(nodes[name]), name, len(spatial.co2.atmospheres)))
-                co2_atmospheres = spatial.co2.atmospheres
             n.madd("Link",
                    nodes[name] + f" {name} micro gas CHP",
                    p_nom_extendable = True,
                    bus0 = spatial.gas.df.loc[nodes[name], "nodes"].values,
                    bus1 = nodes[name],
                    bus2 = nodes[name] + f" {name} heat",
-                   bus3 = co2_atmospheres,
+                   bus3 = spatial.co2.atmospheres,
                    carrier = name + " micro gas CHP",
                    efficiency = costs.at["micro CHP", "efficiency"],
                    efficiency2 = costs.at["micro CHP", "efficiency-heat"],
@@ -2561,18 +2533,15 @@ def add_biomass(n, costs):
     """
     if snakemake.config["co2_atmosphere"] == "global":
         logger.info("Configure model with %d 'biogas to gas' links connected to the global 'CO2 atmosphere' bus" % len(spatial.gas.biogas_to_gas))
-        co2_atmospheres = spatial.co2.atmospheres
     elif snakemake.config["co2_atmosphere"] == "local":
-        logger.info("Configure model with %d 'biogas to gas' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.gas.biogas_to_gas), len(spatial.co2.local_atmospheres.unique())))
-        co2_atmospheres = spatial.co2.local_atmospheres
+        logger.info("Configure model with %d 'biogas to gas' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.gas.biogas_to_gas), len(spatial.co2.atmospheres.unique())))
     else:   # nodal
         logger.info("Configure model with %d 'biogas to gas' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.gas.biogas_to_gas), len(spatial.co2.atmospheres)))
-        co2_atmospheres = spatial.co2.atmospheres
     n.madd("Link",
            spatial.gas.biogas_to_gas,
            bus0 = spatial.gas.biogas,
            bus1 = spatial.gas.nodes,
-           bus2 = co2_atmospheres,
+           bus2 = spatial.co2.atmospheres,
            carrier = "biogas to gas",
            capital_cost = costs.loc["biogas upgrading", "fixed"],
            marginal_cost = costs.loc["biogas upgrading", "VOM"],
@@ -2669,19 +2638,16 @@ def add_biomass(n, costs):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d 'urban central solid biomass CHP CC' links connected to the global 'CO2 atmosphere' bus" % len(urban_central))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'urban central solid biomass CHP CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(urban_central), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'urban central solid biomass CHP CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(urban_central), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'urban central solid biomass CHP CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(urban_central), len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                urban_central + " urban central solid biomass CHP CC",
                bus0 = spatial.biomass.df.loc[urban_central, "nodes"].values,
                bus1 = urban_central,
                bus2 = urban_central + " urban central heat",
-               bus3 = co2_atmospheres,
+               bus3 = spatial.co2.atmospheres,
                bus4 = spatial.co2.df.loc[urban_central, "nodes"].values,
                carrier = "urban central solid biomass CHP CC",
                p_nom_extendable = True,
@@ -2738,19 +2704,16 @@ def add_biomass(n, costs):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d 'biomass to liquid' links connected to the global 'CO2 atmosphere' bus" % len(spatial.biomass.nodes))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'biomass to liquid' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'biomass to liquid' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'biomass to liquid' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                spatial.biomass.nodes,
                suffix = " biomass to liquid",
                bus0 = spatial.biomass.nodes,
                bus1 = spatial.oil.nodes,
-               bus2 = co2_atmospheres,
+               bus2 = spatial.co2.atmospheres,
                carrier = "biomass to liquid",
                lifetime = costs.at["BtL", "lifetime"],
                efficiency = costs.at["BtL", "efficiency"],
@@ -2784,19 +2747,16 @@ def add_biomass(n, costs):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d 'biomass to liquid CC' links connected to the global 'CO2 atmosphere' bus" % len(spatial.biomass.nodes))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'biomass to liquid CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'biomass to liquid CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'biomass to liquid CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                spatial.biomass.nodes,
                suffix = " biomass to liquid CC",
                bus0 = spatial.biomass.nodes,
                bus1 = spatial.oil.nodes,
-               bus2 = co2_atmospheres,
+               bus2 = spatial.co2.atmospheres,
                bus3 = spatial.co2.nodes,
                carrier = "biomass to liquid",
                lifetime = costs.at["BtL", "lifetime"],
@@ -2830,19 +2790,16 @@ def add_biomass(n, costs):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d 'solid biomass to gas' links connected to the global 'CO2 atmosphere' bus" % len(spatial.biomass.nodes))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'solid biomass to gas' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'solid biomass to gas' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'solid biomass to gas' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                spatial.biomass.nodes,
                suffix = " solid biomass to gas",
                bus0 = spatial.biomass.nodes,
                bus1 = spatial.gas.nodes,
-               bus3 = co2_atmospheres,
+               bus3 = spatial.co2.atmospheres,
                carrier = "BioSNG",
                lifetime = costs.at["BioSNG", "lifetime"],
                efficiency = costs.at["BioSNG", "efficiency"],
@@ -2879,20 +2836,17 @@ def add_biomass(n, costs):
         """
         if snakemake.config["co2_atmosphere"] == "global":
             logger.info("Configure model with %d 'solid biomass to gas CC' links connected to the global 'CO2 atmosphere' bus" % len(spatial.biomass.nodes))
-            co2_atmospheres = spatial.co2.atmospheres
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'solid biomass to gas CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.local_atmospheres.unique())))
-            co2_atmospheres = spatial.co2.local_atmospheres
+            logger.info("Configure model with %d 'solid biomass to gas CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'solid biomass to gas CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres)))
-            co2_atmospheres = spatial.co2.atmospheres
         n.madd("Link",
                spatial.biomass.nodes,
                suffix = " solid biomass to gas CC",
                bus0 = spatial.biomass.nodes,
                bus1 = spatial.gas.nodes,
                bus2 = spatial.co2.nodes,
-               bus3 = co2_atmospheres,
+               bus3 = spatial.co2.atmospheres,
                carrier = "BioSNG",
                lifetime = costs.at["BioSNG", "lifetime"],
                efficiency = costs.at["BioSNG", "efficiency"],
@@ -2974,18 +2928,15 @@ def add_industry(n, costs):
     """
     if snakemake.config["co2_atmosphere"] == "global":
         logger.info("Configure model with %d 'solid biomass for industry CC' links connected to the global 'CO2 atmosphere' bus" % len(spatial.biomass.industry_cc))
-        co2_atmospheres = spatial.co2.atmospheres
     elif snakemake.config["co2_atmosphere"] == "local":
-        logger.info("Configure model with %d 'solid biomass for industry CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.industry_cc), len(spatial.co2.local_atmospheres.unique())))
-        co2_atmospheres = spatial.co2.local_atmospheres
+        logger.info("Configure model with %d 'solid biomass for industry CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.industry_cc), len(spatial.co2.atmospheres.unique())))
     else:   # nodal
         logger.info("Configure model with %d 'solid biomass for industry CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.biomass.industry_cc), len(spatial.co2.atmospheres)))
-        co2_atmospheres = spatial.co2.atmospheres
     n.madd("Link",
            spatial.biomass.industry_cc,
            bus0 = spatial.biomass.nodes,
            bus1 = spatial.biomass.industry,
-           bus2 = co2_atmospheres,
+           bus2 = spatial.co2.atmospheres,
            bus3 = spatial.co2.nodes,
            carrier = "solid biomass for industry CC",
            p_nom_extendable = True,
@@ -3034,18 +2985,15 @@ def add_industry(n, costs):
     """
     if snakemake.config["co2_atmosphere"] == "global":
         logger.info("Configure model with %d 'gas for industry' links connected to the global 'CO2 atmosphere' bus" % len(spatial.gas.industry))
-        co2_atmospheres = spatial.co2.atmospheres
     elif snakemake.config["co2_atmosphere"] == "local":
-        logger.info("Configure model with %d 'gas for industry' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.gas.industry), len(spatial.co2.local_atmospheres.unique())))
-        co2_atmospheres = spatial.co2.local_atmospheres
+        logger.info("Configure model with %d 'gas for industry' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.gas.industry), len(spatial.co2.atmospheres.unique())))
     else:   # nodal
         logger.info("Configure model with %d 'gas for industry' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.gas.industry), len(spatial.co2.atmospheres)))
-        co2_atmospheres = spatial.co2.atmospheres
     n.madd("Link",
            spatial.gas.industry,
            bus0 = spatial.gas.nodes,
            bus1 = spatial.gas.industry,
-           bus2 = co2_atmospheres,
+           bus2 = spatial.co2.atmospheres,
            carrier = "gas for industry",
            p_nom_extendable = True,
            efficiency = 1.0,
@@ -3074,18 +3022,15 @@ def add_industry(n, costs):
     """
     if snakemake.config["co2_atmosphere"] == "global":
         logger.info("Configure model with %d 'gas for industry CC' links connected to the global 'CO2 atmosphere' bus" % len(spatial.gas.industry))
-        co2_atmospheres = spatial.co2.atmospheres
     elif snakemake.config["co2_atmosphere"] == "local":
-        logger.info("Configure model with %d 'gas for industry CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.gas.industry), len(spatial.co2.local_atmospheres.unique())))
-        co2_atmospheres = spatial.co2.local_atmospheres
+        logger.info("Configure model with %d 'gas for industry CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.gas.industry), len(spatial.co2.atmospheres.unique())))
     else:   # nodal
         logger.info("Configure model with %d 'gas for industry CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.gas.industry), len(spatial.co2.atmospheres)))
-        co2_atmospheres = spatial.co2.atmospheres
     n.madd("Link",
            spatial.gas.industry_cc,
            bus0 = spatial.gas.nodes,
            bus1 = spatial.gas.industry,
-           bus2 = co2_atmospheres,
+           bus2 = spatial.co2.atmospheres,
            bus3 = spatial.co2.nodes,
            carrier = "gas for industry CC",
            p_nom_extendable = True,
@@ -3251,10 +3196,10 @@ def add_industry(n, costs):
                   p_set = -co2
                  )
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'shipping methanol emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.local_atmospheres.unique())))
+            logger.info("Configure model with %d 'shipping methanol emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres.unique())))
             n.madd("Load",
                    spatial.nodes + " shipping methanol emissions",
-                   bus = spatial.co2.local_atmospheres,
+                   bus = spatial.co2.atmospheres,
                    carrier = "shipping methanol emissions",
                    p_set = -co2.values
                   )
@@ -3300,11 +3245,11 @@ def add_industry(n, costs):
                   p_set = -co2
                  )
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'shipping oil emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.local_atmospheres.unique())))
+            logger.info("Configure model with %d 'shipping oil emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres.unique())))
             co2 = shipping_oil_share * p_set * costs.at["oil", "CO2 intensity"]
             n.madd("Load",
                    spatial.nodes + " shipping oil emissions",
-                   bus = spatial.co2.local_atmospheres,
+                   bus = spatial.co2.atmospheres,
                    carrier = "shipping oil emissions",
                    p_set = -co2.values
                   )
@@ -3377,19 +3322,16 @@ def add_industry(n, costs):
             # TODO: understand why it gives "WARNING:pypsa.io:The following Link have buses which are not defined" (it happens with original code too)
             if snakemake.config["co2_atmosphere"] == "global":
                 logger.info("Configure model with %d '%s oil boiler' links connected to the global 'CO2 atmosphere' bus" % (len(nodes_heat[name]), name))
-                co2_atmospheres = spatial.co2.atmospheres
             elif snakemake.config["co2_atmosphere"] == "local":
-                logger.info("Configure model with %d '%s oil boiler' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes_heat[name]), name, len(spatial.co2.local_atmospheres.unique())))
-                co2_atmospheres = spatial.co2.local_atmospheres
+                logger.info("Configure model with %d '%s oil boiler' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes_heat[name]), name, len(spatial.co2.atmospheres.unique())))
             else:   # nodal
                 logger.info("Configure model with %d '%s oil boiler' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(nodes_heat[name]), name, len(spatial.co2.atmospheres)))
-                co2_atmospheres = spatial.co2.atmospheres
             n.madd("Link",
                    nodes_heat[name] + f" {name} oil boiler",
                    p_nom_extendable = True,
                    bus0 = spatial.oil.nodes,
                    bus1 = nodes_heat[name] + f" {name}  heat",
-                   bus2 = co2_atmospheres,
+                   bus2 = spatial.co2.atmospheres,
                    carrier = f"{name} oil boiler",
                    efficiency = costs.at["decentral oil boiler", "efficiency"],
                    efficiency2 = costs.at["oil", "CO2 intensity"],
@@ -3475,7 +3417,7 @@ def add_industry(n, costs):
               p_set = -co2
              )
     elif snakemake.config["co2_atmosphere"] == "local":
-        logger.info("Configure model with %d 'oil emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.local_atmospheres.unique())))
+        logger.info("Configure model with %d 'oil emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres.unique())))
 
         # get HVC demand per node
         HVC_demand_factor = options.get("HVC_demand_factor", 1)
@@ -3491,7 +3433,7 @@ def add_industry(n, costs):
 
         n.madd("Load",
                spatial.nodes + " oil emissions",
-               bus = spatial.co2.local_atmospheres,
+               bus = spatial.co2.atmospheres,
                carrier = "oil emissions",
                p_set = -co2.values
               )
@@ -3599,17 +3541,14 @@ def add_industry(n, costs):
     """
     if snakemake.config["co2_atmosphere"] == "global":
         logger.info("Configure model with %d 'process emissions' links connected to the global 'CO2 atmosphere' bus" % len(spatial.co2.process_emissions))
-        co2_atmospheres = spatial.co2.atmospheres
     elif snakemake.config["co2_atmosphere"] == "local":
-        logger.info("Configure model with %d 'process emissions' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.co2.process_emissions), len(spatial.co2.local_atmospheres.unique())))
-        co2_atmospheres = spatial.co2.local_atmospheres
+        logger.info("Configure model with %d 'process emissions' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.co2.process_emissions), len(spatial.co2.atmospheres.unique())))
     else:   # nodal
         logger.info("Configure model with %d 'process emissions' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.co2.process_emissions), len(spatial.co2.atmospheres)))
-        co2_atmospheres = spatial.co2.atmospheres
     n.madd("Link",
            spatial.co2.process_emissions,
            bus0 = spatial.co2.process_emissions,
-           bus1 = co2_atmospheres,
+           bus1 = spatial.co2.atmospheres,
            carrier = "process emissions",
            p_nom_extendable = True,
            efficiency = 1.0
@@ -3634,18 +3573,15 @@ def add_industry(n, costs):
     """
     if snakemake.config["co2_atmosphere"] == "global":
         logger.info("Configure model with %d 'process emissions CC' links connected to the global 'CO2 atmosphere' bus" % len(spatial.co2.locations))
-        co2_atmospheres = spatial.co2.atmospheres
     elif snakemake.config["co2_atmosphere"] == "local":
-        logger.info("Configure model with %d 'process emissions CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.co2.locations), len(spatial.co2.local_atmospheres.unique())))
-        co2_atmospheres = spatial.co2.local_atmospheres
+        logger.info("Configure model with %d 'process emissions CC' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.co2.locations), len(spatial.co2.atmospheres.unique())))
     else:   # nodal
         logger.info("Configure model with %d 'process emissions CC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.co2.locations), len(spatial.co2.atmospheres)))
-        co2_atmospheres = spatial.co2.atmospheres
     n.madd("Link",
            spatial.co2.locations,
            suffix = " process emissions CC",
            bus0 = spatial.co2.process_emissions,
-           bus1 = co2_atmospheres,
+           bus1 = spatial.co2.atmospheres,
            bus2 = spatial.co2.nodes,
            carrier = "process emissions CC",
            p_nom_extendable = True,
@@ -3816,11 +3752,11 @@ def add_agriculture(n, costs):
                   p_set = -co2
                  )
         elif snakemake.config["co2_atmosphere"] == "local":
-            logger.info("Configure model with %d 'agriculture machinery oil emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.local_atmospheres.unique())))
+            logger.info("Configure model with %d 'agriculture machinery oil emissions' loads attached to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres.unique())))
             co2 = oil_share * machinery_nodal_energy * 1e6 / nhours * costs.at["oil", "CO2 intensity"]
             n.madd("Load",
                    spatial.nodes + " agriculture machinery oil emissions",
-                   bus = spatial.co2.local_atmospheres,
+                   bus = spatial.co2.atmospheres,
                    carrier = "agriculture machinery oil emissions",
                    p_set = -co2.values
                   )
