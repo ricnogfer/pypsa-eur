@@ -552,6 +552,24 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
+def add_local_nodal_co2_atmosphere_contraints(n, config):
+
+    logger.info("Add local/nodal CO2 constraints")
+
+    co2_budget_values_df = pd.read_csv("results/%s/co2_budget_s%s_%s_l%s_%s_%s_%s.csv" % (snakemake.config["run"]["name"], snakemake.wildcards.simpl, snakemake.wildcards.clusters, snakemake.wildcards.ll, snakemake.wildcards.opts, snakemake.wildcards.sector_opts, snakemake.wildcards.planning_horizons))
+
+    co2_budget_values_df.columns = ["co2 atmosphere", "co2 budget"]
+
+    stores = n.model["Store-e_nom"]
+
+    co2_budget = co2_budget_values_df["co2 budget"]
+
+    co2_budget.index = co2_budget_values_df["co2 atmosphere"]
+
+    for atmosphere in co2_budget.index:
+        n.model.add_constraints(stores[atmosphere] <= co2_budget[atmosphere], name = "%s constraint" % atmosphere)
+
+
 def extra_functionality(n, snapshots):
     """
     Collects supplementary constraints which will be passed to
@@ -577,6 +595,10 @@ def extra_functionality(n, snapshots):
             add_EQ_constraints(n, o)
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
+
+    # add local/nodal CO2 atmosphere constraints
+    if config["co2_atmosphere"] != "global":
+        add_local_nodal_co2_atmosphere_contraints(n, config)
 
 
 def solve_network(n, config, opts="", **kwargs):
@@ -673,5 +695,19 @@ if __name__ == "__main__":
 
         n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))
         n.export_to_netcdf(snakemake.output[0])
+
+        # write dual values into a CSV file
+        dual_values_file = "results/%s/dual_values_s%s_%s_l%s_%s_%s_%s.csv" % (n.config["run"]["name"], snakemake.wildcards.simpl, snakemake.wildcards.clusters, snakemake.wildcards.ll, snakemake.wildcards.opts, snakemake.wildcards.sector_opts, snakemake.wildcards.planning_horizons)
+        logger.info("Write dual values to file '%s'" % dual_values_file)
+        with open(dual_values_file, "w") as handle:
+            handle.write("node,value\n")
+            if snakemake.config["co2_atmosphere"] == "global":
+                handle.write("Europe,%f\n" % n.global_constraints.mu["CO2Limit"])
+            else:   # local/nodal
+                suffix = " co2 atmosphere constraint"
+                for key in n.model.dual.keys():
+                    if key.endswith(suffix):
+                        value = n.model.dual[key].values
+                        handle.write("%s,%f\n" % (key[:-len(suffix)], value))
 
     logger.info("Maximum memory usage: {}".format(mem.mem_usage))

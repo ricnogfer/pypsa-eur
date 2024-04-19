@@ -596,6 +596,9 @@ def add_co2_tracking(n, options):
 
         logger.info("Configure model with %d 'CO2 atmosphere' stores attached to the %d local 'CO2 atmosphere' buses" % (len(co2_atmospheres_unique), len(co2_atmospheres_unique)))
 
+        # initialize dictionary to store local CO2 budget values
+        co2_budget_values = {}
+
         # read CSV file containing disparate industries/services CO2 emissions (in megatonnes)
         co2_emissions = pd.read_csv(snakemake.input.co2_totals_name, index_col = 0)
 
@@ -611,20 +614,27 @@ def add_co2_tracking(n, options):
         # loop through local CO2 atmospheres
         for atmosphere in co2_atmospheres_unique:
 
-              # calculate maximum CO2 emissions value allowed per local
-              country = atmosphere[:2]
-              e_nom = co2_emissions_per_country[country] * co2_budget_per_country[country]
-
               # add store to local CO2 atmosphere
               n.add("Store",
                     atmosphere,
-                    e_nom = e_nom,
+                    e_nom_extendable = True,
                     e_min_pu = -1,
                     carrier = "co2",
                     bus = atmosphere
                    )
+
+              # calculate maximum CO2 emissions value allowed per local
+              country = atmosphere[:2]
+              co2_budget_values[atmosphere] = co2_emissions_per_country[country] * co2_budget_per_country[country]
+
+        # write dictionary into a CSV file
+        co2_budget_values_df = pd.DataFrame.from_dict(co2_budget_values, orient = "index", columns = ["e_nom"])
+        co2_budget_values_df.to_csv("results/%s/co2_budget_s%s_%s_l%s_%s_%s_%s.csv" % (snakemake.config["run"]["name"], snakemake.wildcards.simpl, snakemake.wildcards.clusters, snakemake.wildcards.ll, snakemake.wildcards.opts, snakemake.wildcards.sector_opts, snakemake.wildcards.planning_horizons))
     else:   # nodal
         logger.info("Configure model with %d 'CO2 atmosphere' stores attached to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.co2.atmospheres), len(spatial.co2.atmospheres)))
+
+        # initialize dictionary to store nodal CO2 budget values
+        co2_budget_values = {}
 
         # read CSV file containing disparate industries/services CO2 emissions (in megatonnes)
         co2_emissions = pd.read_csv(snakemake.input.co2_totals_name, index_col = 0)
@@ -641,20 +651,25 @@ def add_co2_tracking(n, options):
         # loop through nodal CO2 atmospheres
         for atmosphere in spatial.co2.atmospheres:
 
-              # calculate maximum CO2 emissions value allowed per node
-              country = atmosphere[:2]
-              node = atmosphere[:5]
-              fraction = pop_layout.loc[node]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
-              e_nom = co2_emissions_per_country[country] * co2_budget_per_country[country] * fraction
-
               # add store to nodal CO2 atmosphere
               n.add("Store",
                     atmosphere,
-                    e_nom = e_nom,
+                    e_nom_extendable = True,
                     e_min_pu = -1,
                     carrier = "co2",
                     bus = atmosphere
                    )
+
+              # calculate maximum CO2 emissions value allowed per node
+              country = atmosphere[:2]
+              node = atmosphere[:5]
+              fraction = pop_layout.loc[node]["fraction"]   # the population layout fraction is used to determine the "weight" that a node has in its country - this can always be changed in case of being incorrect after all
+              co2_budget_values[atmosphere] = co2_emissions_per_country[country] * co2_budget_per_country[country] * fraction
+
+        # write dictionary into a CSV file
+        co2_budget_values_df = pd.DataFrame.from_dict(co2_budget_values, orient = "index", columns = ["e_nom"])
+        co2_budget_values_df.to_csv("results/%s/co2_budget_s%s_%s_l%s_%s_%s_%s.csv" % (snakemake.config["run"]["name"], snakemake.wildcards.simpl, snakemake.wildcards.clusters, snakemake.wildcards.ll, snakemake.wildcards.opts, snakemake.wildcards.sector_opts, snakemake.wildcards.planning_horizons))
+
 
     # this tracks CO2 stored, e.g. underground
     """
