@@ -873,7 +873,7 @@ def add_co2limit(n, nyears=1.0, limit=0.0):
     if snakemake.config["co2_atmosphere"] != "global":
         # stop processing given that local/nodal CO2 atmosphere constraints (i.e. emissions limits) are specified
         # in the stores associated to these atmospheres (see function "add_co2_tracking" for additional information)
-        logger.info("Skipping add global CO2 budget limit given that this is done on a per local/nodal basis instead")
+        logger.info("Skip adding global CO2 budget limit given that this is done on a per local/nodal basis instead")
         return
 
     logger.info(f"Adding CO2 budget limit as per unit of 1990 levels of {limit}")

@@ -552,7 +552,7 @@ def add_pipe_retrofit_constraint(n):
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
 
-def add_local_nodal_co2_atmosphere_contraints(n, config):
+def add_local_nodal_co2_atmosphere_constraints(n, config):
 
     logger.info("Add local/nodal CO2 constraints")
 
@@ -560,14 +560,18 @@ def add_local_nodal_co2_atmosphere_contraints(n, config):
 
     co2_budget_values_df.columns = ["co2 atmosphere", "co2 budget"]
 
-    stores = n.model["Store-e_nom"]
+    stores_energy = n.model["Store-e"]
 
     co2_budget = co2_budget_values_df["co2 budget"]
 
     co2_budget.index = co2_budget_values_df["co2 atmosphere"]
 
+    first_timestamp = n.snapshots[0].strftime("%Y-%m-%d %X")
+
+    last_timestamp = n.snapshots[-1].strftime("%Y-%m-%d %X")
+
     for atmosphere in co2_budget.index:
-        n.model.add_constraints(stores[atmosphere] <= co2_budget[atmosphere], name = "%s constraint" % atmosphere)
+        n.model.add_constraints(stores_energy[last_timestamp, atmosphere] - stores_energy[first_timestamp, atmosphere] <= co2_budget[atmosphere], name = "%s constraint" % atmosphere)
 
 
 def extra_functionality(n, snapshots):
@@ -598,7 +602,7 @@ def extra_functionality(n, snapshots):
 
     # add local/nodal CO2 atmosphere constraints
     if config["co2_atmosphere"] != "global":
-        add_local_nodal_co2_atmosphere_contraints(n, config)
+        add_local_nodal_co2_atmosphere_constraints(n, config)
 
 
 def solve_network(n, config, opts="", **kwargs):
