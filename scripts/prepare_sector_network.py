@@ -3203,7 +3203,7 @@ def add_industry(n, costs):
         )
         """
         if snakemake.config["co2_atmosphere"] == "global":
-            logger.info("Configure model with a 'shipping methanol emissions' loads attached to the global 'CO2 atmosphere' bus")
+            logger.info("Configure model with a 'shipping methanol emissions' load attached to the global 'CO2 atmosphere' bus")
             n.add("Load",
                   "shipping methanol emissions",
                   bus = spatial.co2.atmospheres[0],
