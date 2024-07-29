@@ -599,17 +599,19 @@ def add_co2_tracking(n, options):
         # initialize dictionary to store local CO2 budget values
         co2_budget_values = {}
 
+        # get CO2 budget per country (in fraction)
+        co2_budget_per_country = snakemake.config["co2_budget_local_nodal"][int(snakemake.wildcards.planning_horizons)]
+        logger.info("CO2 budget per country for the year %s:" % snakemake.wildcards.planning_horizons)
+        logger.info(co2_budget_per_country)
+
         # read CSV file containing disparate industries/services CO2 emissions (in megatonnes)
         co2_emissions = pd.read_csv(snakemake.input.co2_totals_name, index_col = 0)
 
         # select CO2 emissions in function of the specified sectors
-        co2_emissions = co2_emissions.loc[list(snakemake.config["co2_budget_per_country"]), emission_sectors_from_opts(snakemake.wildcards.sector_opts)]
+        co2_emissions = co2_emissions.loc[list(co2_budget_per_country), emission_sectors_from_opts(snakemake.wildcards.sector_opts)]
 
         # sum disparate industries/services CO2 emissions per country (in tonnes)
         co2_emissions_per_country = co2_emissions.sum(axis = 1) * 1e6
-
-        # get CO2 budget per country (in fraction)
-        co2_budget_per_country = snakemake.config["co2_budget_per_country"]
 
         # loop through local CO2 atmospheres
         for atmosphere in co2_atmospheres_unique:
@@ -636,17 +638,19 @@ def add_co2_tracking(n, options):
         # initialize dictionary to store nodal CO2 budget values
         co2_budget_values = {}
 
+        # get CO2 budget per country (in fraction)
+        co2_budget_per_country = snakemake.config["co2_budget_local_nodal"][int(snakemake.wildcards.planning_horizons)]
+        logger.info("CO2 budget per country for the year %s:" % snakemake.wildcards.planning_horizons)
+        logger.info(co2_budget_per_country)
+
         # read CSV file containing disparate industries/services CO2 emissions (in megatonnes)
         co2_emissions = pd.read_csv(snakemake.input.co2_totals_name, index_col = 0)
 
         # select CO2 emissions in function of the specified sectors
-        co2_emissions = co2_emissions.loc[list(snakemake.config["co2_budget_per_country"]), emission_sectors_from_opts(snakemake.wildcards.sector_opts)]
+        co2_emissions = co2_emissions.loc[list(co2_budget_per_country), emission_sectors_from_opts(snakemake.wildcards.sector_opts)]
 
         # sum disparate industries/services CO2 emissions per country (in tonnes)
         co2_emissions_per_country = co2_emissions.sum(axis = 1) * 1e6
-
-        # get CO2 budget per country (in fraction)
-        co2_budget_per_country = snakemake.config["co2_budget_per_country"]
 
         # loop through nodal CO2 atmospheres
         for atmosphere in spatial.co2.atmospheres:
