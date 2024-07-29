@@ -615,7 +615,7 @@ if __name__ == "__main__":
 
     update_config_with_sector_opts(snakemake.config, snakemake.wildcards.sector_opts)
 
-    options = snakemake.config["sector"]
+    options = snakemake.config
     opts = snakemake.wildcards.sector_opts.split("-")
 
     baseyear = snakemake.config["scenario"]["planning_horizons"][0]
@@ -642,7 +642,7 @@ if __name__ == "__main__":
     )
 
     if "H" in opts:
-        time_dep_hp_cop = options["time_dep_hp_cop"]
+        time_dep_hp_cop = options["sector"]["time_dep_hp_cop"]
         ashp_cop = (
             xr.open_dataarray(snakemake.input.cop_air_total)
             .to_pandas()
@@ -665,7 +665,7 @@ if __name__ == "__main__":
             default_lifetime,
         )
 
-    if options.get("cluster_heat_buses", False):
+    if options["sector"].get("cluster_heat_buses", False):
         cluster_heat_buses(n)
 
     n.meta = dict(snakemake.config, **dict(wildcards=dict(snakemake.wildcards)))

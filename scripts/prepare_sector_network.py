@@ -61,7 +61,7 @@ def define_spatial(nodes, options):
 
     spatial.biomass = SimpleNamespace()
 
-    if options.get("biomass_spatial", options["biomass_transport"]):
+    if options["sector"].get("biomass_spatial", options["sector"]["biomass_transport"]):
         spatial.biomass.nodes = nodes + " solid biomass"
         spatial.biomass.locations = nodes
         spatial.biomass.industry = nodes + " solid biomass for industry"
@@ -79,14 +79,14 @@ def define_spatial(nodes, options):
     spatial.co2 = SimpleNamespace()
 
     # configure model based on a global, local or nodal CO2 atmosphere(s) depending on value specified in option "co2_atmosphere"
-    if snakemake.config["co2_atmosphere"] == "global":
+    if options["co2_atmosphere"] == "global":
         spatial.co2.atmospheres = ["co2 atmosphere"]
-    elif snakemake.config["co2_atmosphere"] == "local":
+    elif options["co2_atmosphere"] == "local":
         spatial.co2.atmospheres = nodes.str[:2] + " co2 atmosphere"
     else:   # nodal
         spatial.co2.atmospheres = nodes + " co2 atmosphere"
 
-    if options["co2_spatial"]:
+    if options["sector"]["co2_spatial"]:
         spatial.co2.nodes = nodes + " co2 stored"
         spatial.co2.locations = nodes
         spatial.co2.vents = nodes + " co2 vent"
@@ -103,7 +103,7 @@ def define_spatial(nodes, options):
 
     spatial.gas = SimpleNamespace()
 
-    if options["gas_network"]:
+    if options["sector"]["gas_network"]:
         spatial.gas.nodes = nodes + " gas"
         spatial.gas.locations = nodes
         spatial.gas.biogas = nodes + " biogas"
@@ -116,7 +116,7 @@ def define_spatial(nodes, options):
         spatial.gas.biogas = ["EU biogas"]
         spatial.gas.industry = ["gas for industry"]
         spatial.gas.biogas_to_gas = ["EU biogas to gas"]
-        if options.get("co2_spatial", options["co2network"]):
+        if options["sector"].get("co2_spatial", options["sector"]["co2network"]):
             spatial.gas.industry_cc = nodes + " gas for industry CC"
         else:
             spatial.gas.industry_cc = ["gas for industry CC"]
@@ -125,9 +125,9 @@ def define_spatial(nodes, options):
 
     # ammonia
 
-    if options.get("ammonia"):
+    if options["sector"].get("ammonia"):
         spatial.ammonia = SimpleNamespace()
-        if options.get("ammonia") == "regional":
+        if options["sector"].get("ammonia") == "regional":
             spatial.ammonia.nodes = nodes + " NH3"
             spatial.ammonia.locations = nodes
         else:
@@ -144,7 +144,7 @@ def define_spatial(nodes, options):
     # methanol
     spatial.methanol = SimpleNamespace()
 
-    if snakemake.config["co2_atmosphere"] == "global":
+    if options["co2_atmosphere"] == "global":
         spatial.methanol.nodes = ["EU methanol"]
         spatial.methanol.locations = ["EU"]
     else:   # local and nodal
@@ -4141,7 +4141,7 @@ if __name__ == "__main__":
         logger.error("The option 'co2_atmosphere' should be set to 'global', 'local' or 'nodal' ('%s' was specified instead)" % snakemake.config["co2_atmosphere"])
         sys.exit(-1)
 
-    spatial = define_spatial(pop_layout.index, options)
+    spatial = define_spatial(pop_layout.index, snakemake.config)
 
     if snakemake.config["foresight"] == "myopic":
         add_lifetime_wind_solar(n, costs)
