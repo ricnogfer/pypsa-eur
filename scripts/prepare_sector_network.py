@@ -872,6 +872,43 @@ def add_dac(n, costs):
           )
 
 
+def add_doc(n, costs):
+
+    # get nodes with offshore wind generators (i.e nodes bordering sea or ocean)
+    tmp = list()
+    seen = set()
+    for generator in n.generators.query("Generator.str.contains('offwind')").index:
+        node = " ".join(generator.split(" ")[:2])
+        if node not in seen:
+            seen.add(node)
+            tmp.append(node)
+    nodes = pd.Index(data = tmp, name = "Node")
+
+    efficiency2 = costs.at["direct air capture", "electricity-input"] + costs.at["direct air capture", "compression-electricity-input"]
+
+    if snakemake.config["co2_atmosphere"] == "global":
+        logger.info("Configure model with %d 'DOC' links connected to the global 'CO2 atmosphere' bus" % len(nodes))
+        co2_atmospheres = spatial.co2.atmospheres[0]
+    elif snakemake.config["co2_atmosphere"] == "local":
+        co2_atmospheres = nodes.str[:2] + " co2 atmosphere"
+        logger.info("Configure model with %d 'DOC' links connected to the %d local 'CO2 atmosphere' buses" % (len(nodes), len(co2_atmospheres.unique())))
+    else:   # nodal
+        co2_atmospheres = nodes + " co2 atmosphere"
+        logger.info("Configure model with %d 'DOC' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(nodes), len(co2_atmospheres)))
+    n.madd("Link",
+           nodes + " DOC",
+           bus0 = co2_atmospheres,
+           bus1 = nodes + " co2 stored",
+           bus2 = nodes,
+           carrier = "DOC",
+           capital_cost = costs.at["direct air capture", "fixed"] * 2,   # TODO: update costs dataframe with DOC capital cost (when this value is known)
+           efficiency = 0.71,   # TODO: update costs dataframe with DOC efficiency (71%)
+           efficiency2 = -efficiency2 * (efficiency2 / 5.58), # 5.58 MWh/tCO2 = 4.6MWh/tCO2 (water intake, pre-treatment and pumping) + 0.98MWh/tCO2 (BPMED)
+           p_nom_extendable = True,
+           lifetime = costs.at["direct air capture", "lifetime"]   # TODO: update costs dataframe with DOC lifetime (when this value is known)
+          )
+
+
 def add_co2limit(n, nyears=1.0, limit=0.0):
 
     if snakemake.config["co2_atmosphere"] != "global":
@@ -4202,6 +4239,9 @@ if __name__ == "__main__":
 
     if options["dac"]:
         add_dac(n, costs)
+
+    if options["doc"]:
+        add_doc(n, costs)
 
     if "decentral" in opts:
         decentral(n)

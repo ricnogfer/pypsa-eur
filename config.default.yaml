@@ -609,6 +609,7 @@ sector:
   helmeth: true
   coal_cc: false
   dac: true
+  doc: true
   co2_vent: false
   allam_cycle: false
   SMR: true
