@@ -901,9 +901,9 @@ def add_doc(n, costs):
            bus1 = nodes + " co2 stored",
            bus2 = nodes,
            carrier = "DOC",
-           capital_cost = costs.at["direct air capture", "fixed"] * 2,   # TODO: update costs dataframe with DOC capital cost (when this value is known)
-           efficiency = 0.71,   # TODO: update costs dataframe with DOC efficiency (71%)
-           efficiency2 = -efficiency2 * (efficiency2 / 5.58), # 5.58 MWh/tCO2 = 4.6MWh/tCO2 (water intake, pre-treatment and pumping) + 0.98MWh/tCO2 (BPMED)
+           capital_cost = costs.at["direct air capture", "fixed"],   # TODO: update costs dataframe with DOC capital cost (when this value is known)
+           efficiency = 0.71,   # TODO: update costs dataframe with DOC efficiency (71%) (Digdaya’s el al. 2020)
+           efficiency2 = -5.58,   # 4.6 MWh/tCO2 (water intake, pre-treatment and pumping) + 0.98 MWh/tCO2 (BPMED) (Digdaya’s el al. 2020)
            p_nom_extendable = True,
            lifetime = costs.at["direct air capture", "lifetime"]   # TODO: update costs dataframe with DOC lifetime (when this value is known)
           )
