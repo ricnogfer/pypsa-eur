@@ -1077,6 +1077,7 @@ plotting:
     CCS: '#f29dae'
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
+    DOC: '#1f77b4'
     co2 stored: '#f2385a'
     co2: '#f29dae'
     co2 vent: '#ffd4dc'
