@@ -884,8 +884,6 @@ def add_doc(n, costs):
             tmp.append(node)
     nodes = pd.Index(data = tmp, name = "Node")
 
-    efficiency2 = costs.at["direct air capture", "electricity-input"] + costs.at["direct air capture", "compression-electricity-input"]
-
     if snakemake.config["co2_atmosphere"] == "global":
         logger.info("Configure model with %d 'DOC' links connected to the global 'CO2 atmosphere' bus" % len(nodes))
         co2_atmospheres = spatial.co2.atmospheres[0]
@@ -902,8 +900,8 @@ def add_doc(n, costs):
            bus2 = nodes,
            carrier = "DOC",
            capital_cost = costs.at["direct air capture", "fixed"],   # TODO: update costs dataframe with DOC capital cost (when this value is known)
-           efficiency = 0.71,   # TODO: update costs dataframe with DOC efficiency (71%) (Digdaya’s el al. 2020)
-           efficiency2 = -5.58,   # 4.6 MWh/tCO2 (water intake, pre-treatment and pumping) + 0.98 MWh/tCO2 (BPMED) (Digdaya’s el al. 2020)
+           efficiency = 1.0,
+           efficiency2 = -5.58,   # 4.6 MWh/tCO2 (water intake, pre-treatment and pumping) + 0.98 MWh/tCO2 (BPMED) (Digdaya el al. 2020)
            p_nom_extendable = True,
            lifetime = costs.at["direct air capture", "lifetime"]   # TODO: update costs dataframe with DOC lifetime (when this value is known)
           )
