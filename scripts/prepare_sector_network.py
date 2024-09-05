@@ -874,7 +874,7 @@ def add_dac(n, costs):
 
 def add_doc(n, costs):
 
-    # get nodes with offshore wind generators (i.e nodes bordering sea or ocean)
+    # get nodes bordering sea or ocean (by checking if the node has a AC or DC offshore wind generator)
     tmp = list()
     seen = set()
     for generator in n.generators.query("Generator.str.contains('offwind')").index:
