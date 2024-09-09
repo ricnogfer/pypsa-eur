@@ -324,24 +324,26 @@ def plot_h2_map(network, regions):
             )
 
     if not h2_retro.empty:
-        positive_order = h2_retro.bus0 < h2_retro.bus1
-        h2_retro_p = h2_retro[positive_order]
-        swap_buses = {"bus0": "bus1", "bus1": "bus0"}
-        h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
-        h2_retro = pd.concat([h2_retro_p, h2_retro_n])
+        if snakemake.config["foresight"] != "myopic":
+            positive_order = h2_retro.bus0 < h2_retro.bus1
+            h2_retro_p = h2_retro[positive_order]
+            swap_buses = {"bus0": "bus1", "bus1": "bus0"}
+            h2_retro_n = h2_retro[~positive_order].rename(columns=swap_buses)
+            h2_retro = pd.concat([h2_retro_p, h2_retro_n])
 
-        h2_retro["index_orig"] = h2_retro.index
-        h2_retro.index = h2_retro.apply(
-            lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
-            axis=1,
-        )
+            h2_retro["index_orig"] = h2_retro.index
+            h2_retro.index = h2_retro.apply(
+                lambda x: f"H2 pipeline {x.bus0.replace(' H2', '')} -> {x.bus1.replace(' H2', '')}",
+                axis=1,
+            )
 
         retro_w_new_i = h2_retro.index.intersection(h2_new.index)
         h2_retro_w_new = h2_retro.loc[retro_w_new_i]
 
         retro_wo_new_i = h2_retro.index.difference(h2_new.index)
         h2_retro_wo_new = h2_retro.loc[retro_wo_new_i]
-        h2_retro_wo_new.index = h2_retro_wo_new.index_orig
+        if not h2_retro_wo_new.empty:
+            h2_retro_wo_new.index = h2_retro_wo_new.index_orig
 
         to_concat = [h2_new, h2_retro_w_new, h2_retro_wo_new]
         h2_total = pd.concat(to_concat).p_nom_opt.groupby(level=0).sum()
