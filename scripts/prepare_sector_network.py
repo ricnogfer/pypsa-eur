@@ -745,7 +745,7 @@ def add_co2_tracking(n, options):
         )
         """
         if snakemake.config["co2_atmosphere"] == "global":
-            logger.info("Configure model with %d global 'CO2 vent' links connected to the global 'CO2 atmosphere' bus" % len(spatial.co2.vents))
+            logger.info("Configure model with %d 'CO2 vent' links connected to the global 'CO2 atmosphere' bus" % len(spatial.co2.vents))
         elif snakemake.config["co2_atmosphere"] == "local":
             logger.info("Configure model with %d 'CO2 vent' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.co2.vents), len(spatial.co2.atmospheres.unique())))
         else:   # nodal

@@ -317,13 +317,28 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                 new_capacity = capacity.loc[new_build.str.replace(name_suffix, "")]
 
                 if generator != "urban central solid biomass CHP":
+
+                    if snakemake.config["co2_atmosphere"] == "global":
+                        logger.info("Configure model with %d 'CCGT' links connected to the global 'CO2 atmosphere' bus for the year %d" % (len(new_capacity.index), grouping_year))
+                        co2_atmosphere = spatial.co2.atmospheres
+                    elif snakemake.config["co2_atmosphere"] == "local":
+                        co2_atmosphere = list()
+                        for node in new_capacity.index:
+                            co2_atmosphere.append("%s co2 atmosphere" % node[:2])
+                        logger.info("Configure model with %d 'CCGT' links connected to the %d local 'CO2 atmosphere' buses for the year %d" % (len(new_capacity.index), len(set(co2_atmosphere)), grouping_year))
+                    else:   # nodal
+                        co2_atmosphere = list()
+                        for node in new_capacity.index:
+                            co2_atmosphere.append("%s co2 atmosphere" % node)
+                        logger.info("Configure model with %d 'CCGT' links connected to the %d nodal 'CO2 atmosphere' buses for the year %d" % (len(new_capacity.index), len(co2_atmosphere), grouping_year))
+
                     n.madd(
                         "Link",
                         new_capacity.index,
                         suffix=name_suffix,
                         bus0=bus0,
                         bus1=new_capacity.index,
-                        bus2="co2 atmosphere",
+                        bus2=co2_atmosphere,
                         carrier=generator,
                         marginal_cost=costs.at[generator, "efficiency"]
                         * costs.at[generator, "VOM"],  # NB: VOM is per MWel
@@ -534,13 +549,20 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[costs_name, "lifetime"],
             )
 
+            if snakemake.config["co2_atmosphere"] == "global":
+                logger.info("Configure model with %d 'gas boiler' links connected to the global 'CO2 atmosphere' bus for the year %d" % (len(nodes[name]), grouping_year))
+            elif snakemake.config["co2_atmosphere"] == "local":
+                logger.info("Configure model with %d 'gas boiler' links connected to the %d local 'CO2 atmosphere' buses for the year %d" % (len(nodes[name]), len(spatial.co2.atmospheres.unique()), grouping_year))
+            else:   # nodal
+                logger.info("Configure model with %d 'gas boiler' links connected to the %d nodal 'CO2 atmosphere' buses for the year %d" % (len(nodes[name]), len(spatial.co2.atmospheres), grouping_year))
+
             n.madd(
                 "Link",
                 nodes[name],
                 suffix=f" {name} gas boiler-{grouping_year}",
                 bus0=spatial.gas.nodes,
                 bus1=nodes[name] + " " + name + " heat",
-                bus2="co2 atmosphere",
+                bus2=spatial.co2.atmospheres,
                 carrier=name + " gas boiler",
                 efficiency=costs.at[name_type + " gas boiler", "efficiency"],
                 efficiency2=costs.at["gas", "CO2 intensity"],
@@ -554,13 +576,20 @@ def add_heating_capacities_installed_before_baseyear(
                 lifetime=costs.at[name_type + " gas boiler", "lifetime"],
             )
 
+            if snakemake.config["co2_atmosphere"] == "global":
+                logger.info("Configure model with %d 'oil boiler' links connected to the global 'CO2 atmosphere' bus for the year %d" % (len(nodes[name]), grouping_year))
+            elif snakemake.config["co2_atmosphere"] == "local":
+                logger.info("Configure model with %d 'oil boiler' links connected to the %d local 'CO2 atmosphere' buses for the year %d" % (len(nodes[name]), len(spatial.co2.atmospheres.unique()), grouping_year))
+            else:   # nodal
+                logger.info("Configure model with %d 'oil boiler' links connected to the %d nodal 'CO2 atmosphere' buses for the year %d" % (len(nodes[name]), len(spatial.co2.atmospheres), grouping_year))
+
             n.madd(
                 "Link",
                 nodes[name],
                 suffix=f" {name} oil boiler-{grouping_year}",
                 bus0=spatial.oil.nodes,
                 bus1=nodes[name] + " " + name + " heat",
-                bus2="co2 atmosphere",
+                bus2=spatial.co2.atmospheres,
                 carrier=name + " oil boiler",
                 efficiency=costs.at["decentral oil boiler", "efficiency"],
                 efficiency2=costs.at["oil", "CO2 intensity"],
