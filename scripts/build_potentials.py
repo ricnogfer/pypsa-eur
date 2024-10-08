@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # configure log mechanism
     logging.basicConfig(level = snakemake.config["logging"]["level"])
     logger = logging.getLogger(__name__)
-    logger.info("Calculate %s potentials" % snakemake.params["component"])
+    logger.info("Calculate %s potentials" % component)
 
 
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         shape = nodes_geojson.to_crs(excluder.crs).loc[[node]].geometry
         band, transform = shape_availability(shape, excluder)
         selected_cells = band.sum()
-        potential = selected_cells * cell_area / 1e6 * snakemake.config["potential"][component]["capacity_per_sqkm"]
+        potential = selected_cells * cell_area / 1e6 * snakemake.config["potential"][component]["capacity_per_sqkm"]   # in tonnes
         df.loc[len(df)] = [node, potential]
         #print("Node=%s" % node)
         #print("Area (km2)=%.2f" % (shape.geometry.area.sum() / 1e6))
