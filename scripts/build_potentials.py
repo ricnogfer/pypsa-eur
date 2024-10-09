@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # select codes (specified in the "config.yaml" file) from Corine Land Cover (CLC) dataset
     excluder = ExclusionContainer(crs = 3035)
-    excluder.add_raster(snakemake.input["corine_dataset"], codes = snakemake.config["potential"][component]["corine"], invert = True, crs = 3035)
+    excluder.add_raster(snakemake.input["corine_dataset"], codes = snakemake.config[component]["corine"], invert = True, crs = 3035)
     cell_area = excluder.res**2
 
 
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         shape = nodes_geojson.to_crs(excluder.crs).loc[[node]].geometry
         band, transform = shape_availability(shape, excluder)
         selected_cells = band.sum()
-        potential = selected_cells * cell_area / 1e6 * snakemake.config["potential"][component]["capacity_per_sqkm"]   # in tonnes
+        potential = selected_cells * cell_area / 1e6 * snakemake.config[component]["potential_per_sqkm"]   # in tonnes
         df.loc[len(df)] = [node, potential]
         #print("Node=%s" % node)
         #print("Area (km2)=%.2f" % (shape.geometry.area.sum() / 1e6))

@@ -395,10 +395,11 @@ renewable:
     hydro_max_hours: "energy_capacity_totals_by_country" # one of energy_capacity_totals_by_country, estimate_by_large_installations or a float
     clip_min_inflow: 1.0
 
-potential:
-  biochar:
-    corine: [12, 13, 14] # codes for arable land in Corine Land Cover (CLC) dataset
-    capacity_per_sqkm: 75 # in tonnes
+biochar:
+  corine: [12, 13, 14] # codes for arable land in Corine Land Cover (CLC) dataset
+  potential_per_sqkm: 75 # in tonnes
+  co2_per_tonne: 2.5 # in tonnes
+  max_land_usage: 0.2 # in percentage
 
 conventional:
   nuclear:
@@ -666,6 +667,7 @@ sector:
     OCGT: gas
   biomass_to_liquid: false
   biosng: false
+  biochar: true
 
 industry:
   St_primary_fraction:  # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
