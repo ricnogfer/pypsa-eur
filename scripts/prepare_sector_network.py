@@ -812,6 +812,55 @@ def add_allam(n, costs):
     )
 
 
+def add_biochar(n):
+
+    if snakemake.config["co2_atmosphere"] == "global":
+        logger.info("Configure model with %d 'biochar' links connected to the global 'CO2 atmosphere' bus" % len(spatial.nodes))
+    elif snakemake.config["co2_atmosphere"] == "local":
+        logger.info("Configure model with %d 'biochar' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres.unique())))
+    else:   # nodal
+        logger.info("Configure model with %d 'biochar' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.nodes), len(spatial.co2.atmospheres)))
+
+
+    # read biochar potentials from CSV file
+    biochar_potentials = pd.read_csv(snakemake.input.biochar_potentials).set_index("node")
+
+
+    # add CO2 biochar buses
+    n.madd("Bus",
+           spatial.nodes + " co2 biochar",
+           carrier = "co2 biochar",
+           unit = "t_co2"
+          )
+
+
+    # add CO2 biochar stores
+    n.madd("Store",
+           spatial.nodes + " co2 biochar",
+           bus = spatial.nodes + " co2 biochar",
+           carrier = "co2 biochar",
+           e_nom_extendable = True,
+           e_nom_max = biochar_potentials["potential (t)"].values * snakemake.config["biochar"]["co2_per_tonne"] * snakemake.config["biochar"]["max_land_usage"]
+          )
+
+
+    # add CO2 biochar links
+    n.madd("Link",
+           spatial.nodes + " biochar",
+           bus0 = spatial.co2.atmospheres,
+           bus1 = spatial.nodes + " co2 biochar",
+           bus2 = spatial.biomass.nodes,
+           bus3 = spatial.nodes,
+           carrier = "co2 biochar",
+           capital_cost = 1.12 * 10**6 * 0.1,
+           marginal_cost = 2.78 * 0.1,
+           efficiency = 1,
+           efficiency2 = -1 / 0.1,
+           efficiency3 = -0.4,
+           p_nom_extendable = True
+          )
+
+
 def add_dac(n, costs):
     heat_carriers = ["urban central heat", "services urban decentral heat"]
     heat_buses = n.buses.index[n.buses.carrier.isin(heat_carriers)]
@@ -4214,6 +4263,9 @@ if __name__ == "__main__":
 
     if options["allam_cycle"]:
         add_allam(n, costs)
+
+    if options["biochar"]:
+        add_biochar(n)
 
     solver_name = snakemake.config["solving"]["solver"]["name"]
     n = set_temporal_aggregation(n, opts, solver_name)

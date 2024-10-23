@@ -1087,6 +1087,7 @@ plotting:
     co2: '#f29dae'
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
+    co2 biochar: '#007000'
     # emissions
     process emissions CC: '#000000'
     process emissions: '#222222'
