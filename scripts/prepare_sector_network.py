@@ -851,12 +851,14 @@ def add_biochar(n):
            bus1 = spatial.nodes + " co2 biochar",
            bus2 = spatial.biomass.nodes,
            bus3 = spatial.nodes,
+           bus4 = n.buses.index[n.buses.carrier == "urban central heat"],
            carrier = "co2 biochar",
            capital_cost = 1.12 * 10**6 * 0.1,
            marginal_cost = 2.78 * 0.1,
            efficiency = 1,
            efficiency2 = -1 / 0.1,
            efficiency3 = -0.4,
+           efficiency4 = 4.3,
            p_nom_extendable = True
           )
 
