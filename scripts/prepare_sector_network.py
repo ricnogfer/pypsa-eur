@@ -2778,6 +2778,15 @@ def add_biomass(n, costs):
             logger.info("Configure model with %d 'biomass to liquid' links connected to the %d local 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres.unique())))
         else:   # nodal
             logger.info("Configure model with %d 'biomass to liquid' links connected to the %d nodal 'CO2 atmosphere' buses" % (len(spatial.biomass.nodes), len(spatial.co2.atmospheres)))
+
+        if "oil" not in n.buses.carrier.unique():
+            n.madd("Bus",
+                   spatial.oil.nodes,
+                   location = spatial.oil.locations,
+                   carrier = "oil",
+                   unit = "MWh_LHV"
+                  )
+
         n.madd("Link",
                spatial.biomass.nodes,
                suffix = " biomass to liquid",
