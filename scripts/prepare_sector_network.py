@@ -853,12 +853,12 @@ def add_biochar(n):
            bus3 = spatial.nodes,
            bus4 = n.buses.index[n.buses.carrier == "urban central heat"],
            carrier = "co2 biochar",
-           capital_cost = 1.12 * 10**6 * 0.1,
-           marginal_cost = 2.78 * 0.1,
+           capital_cost = costs.at["biochar pyrolysis", "fixed"],
+           marginal_cost = costs.at["biochar pyrolysis", "VOM"],
            efficiency = 1,
            efficiency2 = -1 / 0.1,
-           efficiency3 = -0.4,
-           efficiency4 = 4.3,
+           efficiency3 = -costs.at["biochar pyrolysis", "electricity-input"],
+           efficiency4 = costs.at["biochar pyrolysis", "heat-output"],
            p_nom_extendable = True
           )
 
