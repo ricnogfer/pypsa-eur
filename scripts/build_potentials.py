@@ -46,16 +46,16 @@ if __name__ == "__main__":
 
 
     # calculate potential per node
-    df = pandas.DataFrame(columns = ["node", "potential (t)"])
+    df = pandas.DataFrame(columns = ["node", "potential"])
     for node in nodes_geojson.index:
         shape = nodes_geojson.to_crs(excluder.crs).loc[[node]].geometry
         band, transform = shape_availability(shape, excluder)
-        selected_cells = band.sum()
-        potential = selected_cells * cell_area / 1e6 * snakemake.config[component]["potential_per_sqkm"]   # in tonnes
+        selected_cells = band.sum() * cell_area / 1e6   # in sqkm
+        potential =  selected_cells * snakemake.config[component]["potential_per_sqkm"]
         df.loc[len(df)] = [node, potential]
         #print("Node=%s" % node)
         #print("Area (km2)=%.2f" % (shape.geometry.area.sum() / 1e6))
-        #print("Potential (t)=%.2f" % potential)
+        #print("Potential=%.2f" % potential)
         #print()
 
 
