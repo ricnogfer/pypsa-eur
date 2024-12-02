@@ -51,7 +51,7 @@ if __name__ == "__main__":
         shape = nodes_geojson.to_crs(excluder.crs).loc[[node]].geometry
         band, transform = shape_availability(shape, excluder)
         selected_cells = band.sum() * cell_area / 1e6   # in sqkm
-        potential =  selected_cells * snakemake.config[component]["potential_per_sqkm"]
+        potential = selected_cells * snakemake.config[component]["potential_per_sqkm"]
         df.loc[len(df)] = [node, potential]
         #print("Node=%s" % node)
         #print("Area (km2)=%.2f" % (shape.geometry.area.sum() / 1e6))
