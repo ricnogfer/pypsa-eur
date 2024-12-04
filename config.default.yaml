@@ -396,10 +396,18 @@ renewable:
     clip_min_inflow: 1.0
 
 biochar:
-  corine: [12, 13, 14] # codes for arable land in Corine Land Cover (CLC) dataset
-  potential_per_sqkm: 75 # in tonnes
+  corine: [12, 13, 14] # Corine Land Cover (CLC) codes available for biochar
+  potential_per_sqkm: 75 # in tonnes (of biochar)
   co2_per_tonne: 2.5 # in tonnes
   max_land_usage: 0.2 # in percentage
+  number_years: 30
+
+afforestation:
+  corine: [29] # Corine Land Cover (CLC) codes available for afforestation
+  potential_per_sqkm: 11700 # in tonnes (of dry biomass)
+  co2_per_tonne: 1.83 # in tonnes (0.5 * 44.01 / 12.01)
+  max_land_usage: 1.0 # in percentage
+  number_years: 30
 
 conventional:
   nuclear:
@@ -668,6 +676,7 @@ sector:
   biomass_to_liquid: false
   biosng: false
   biochar: true
+  afforestation: true
 
 industry:
   St_primary_fraction:  # fraction of steel produced via primary route versus secondary route (scrap+EAF); today fraction is 0.6
@@ -1088,6 +1097,7 @@ plotting:
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
     co2 biochar: '#007000'
+    co2 afforestation: '#22cc22'
     # emissions
     process emissions CC: '#000000'
     process emissions: '#222222'
