@@ -396,14 +396,14 @@ renewable:
     clip_min_inflow: 1.0
 
 biochar:
-  corine: [12, 13, 14] # Corine Land Cover (CLC) codes available for biochar
+  corine: [12, 13, 14] # CORINE Land Cover (CLC) codes that can be used for biochar
   potential_per_sqkm: 75 # in tonnes (of biochar)
   co2_per_tonne: 2.5 # in tonnes
   max_land_usage: 0.2 # in percentage
   number_years: 30
 
 afforestation:
-  corine: [29] # Corine Land Cover (CLC) codes available for afforestation
+  corine: [29] # CORINE Land Cover (CLC) codes that can be used for afforestation
   potential_per_sqkm: 11700 # in tonnes (of dry biomass)
   co2_per_tonne: 1.83 # in tonnes (0.5 * 44.01 / 12.01)
   max_land_usage: 1.0 # in percentage
