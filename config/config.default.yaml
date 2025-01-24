@@ -270,7 +270,7 @@ renewable:
 biochar:
   corine: [12, 13, 14] # CORINE Land Cover (CLC) codes that can be used for biochar
   potential_per_sqkm: 2000 # in tonnes (of biochar) (20t/ha)
-  co2_per_tonne: 2.182 # in tonnes  0.85 (tC/tbiochar) * 0.7 (%biochar >100y) * 44/12
+  co2_per_tonne_multiplier: 1 # in tonnes multiplier * (0.85 (tC/tbiochar) * 0.7 (%biochar >100y) * 44/12)
   max_land_usage: 0.2 # in percentage (in 2050)
   number_years: 25
 
