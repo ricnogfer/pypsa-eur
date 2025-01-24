@@ -267,6 +267,13 @@ renewable:
     eia_correct_by_capacity: false
     eia_approximate_missing: false
 
+biochar:
+  corine: [12, 13, 14] # CORINE Land Cover (CLC) codes that can be used for biochar
+  potential_per_sqkm: 2000 # in tonnes (of biochar) (20t/ha)
+  co2_per_tonne: 2.182 # in tonnes  0.85 (tC/tbiochar) * 0.7 (%biochar >100y) * 44/12
+  max_land_usage: 0.2 # in percentage (in 2050)
+  number_years: 25
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
   unit_commitment: false
@@ -691,6 +698,7 @@ sector:
   biomass_to_liquid: false
   electrobiofuels: false
   biosng: false
+  biochar: false
   bioH2: false
   municipal_solid_waste: false
   limit_max_growth:
@@ -1296,6 +1304,7 @@ plotting:
     co2: '#f29dae'
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
+    co2 biochar: '#007000'
     # emissions
     process emissions CC: '#000000'
     process emissions: '#222222'
