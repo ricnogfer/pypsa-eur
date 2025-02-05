@@ -814,12 +814,13 @@ def add_biochar(n):
 
 
     # add CO2 biochar stores
+    co2_per_tonne = 1/costs.at["biochar pyrolysis", "biomass input"] * 1/costs.at["yield-biochar", "biomass input"] # tCO2 / tbiochar
     n.madd("Store",
            spatial.nodes + " co2 biochar",
            bus = spatial.nodes + " co2 biochar",
            carrier = "co2 biochar",
            e_nom_extendable = True,
-           e_nom_max = biochar_potentials["potential"].values * snakemake.config["biochar"]["co2_per_tonne"] * snakemake.config["biochar"]["max_land_usage"]
+           e_nom_max = biochar_potentials["potential"].values * co2_per_tonne * snakemake.config["biochar"]["co2_per_tonne_multiplier"] * snakemake.config["biochar"]["max_land_usage"]
           )
 
 
