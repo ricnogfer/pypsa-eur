@@ -6,7 +6,7 @@
 rule build_population_layouts:
     input:
         nuts3_shapes=resources("nuts3_shapes.geojson"),
-        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2_3403768.csv",
+        urban_percent="data/worldbank/API_SP.URB.TOTL.IN.ZS_DS2_en_csv_v2.csv", #_3403768.csv",
         cutout=lambda w: "cutouts/"
         + CDIR
         + config_provider("atlite", "default_cutout")(w)
@@ -447,6 +447,25 @@ rule build_biochar_potentials:
         "../envs/environment.yaml"
     script:
         "../scripts/build_potentials.py"
+
+rule build_EW_potentials:
+    params:
+        component = "EW",
+    input:
+        corine_dataset = "data/bundle/corine/g250_clc06_V18_5.tif",
+        network_geojson = resources("regions_onshore_elec_s{simpl}_{clusters}.geojson"),
+        bioclimate_dataset = "data/World_Ecological_BioVal_cluster.tif",
+    output:
+        csv_file = resources("EW_potentials_s{simpl}_{clusters}.csv"),
+        png_file = resources("EW_potentials_s{simpl}_{clusters}.png"),
+    log:
+        logs("build_EW_potentials_s{simpl}_{clusters}.log"),
+    resources:
+        mem_mb = 10000, 
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_potentials_EW.py"        
 
 rule build_biomass_transport_costs:
     input:
@@ -1089,7 +1108,16 @@ rule prepare_sector_network:
                 "biomass_potentials_s{simpl}_{clusters}_{planning_horizons}.csv"
             )
         ),
-        biochar_potentials=resources("biochar_potentials_s{simpl}_{clusters}.csv"),
+        biochar_potentials=lambda w: (
+            resources("biochar_potentials_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "biochar")(w)
+            else []
+        ),
+        EW_potentials=lambda w: (
+            resources("EW_potentials_s{simpl}_{clusters}.csv")
+            if config_provider("sector", "EW")(w)
+            else []
+        ),
         costs=lambda w: (
             resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
             if config_provider("foresight")(w) == "overnight"
