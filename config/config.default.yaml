@@ -273,6 +273,10 @@ biochar:
   co2_per_tonne: 2.182 # in tonnes  0.85 (tC/tbiochar) * 0.7 (%biochar >100y) * 44/12
   max_land_usage: 0.2 # in percentage (in 2050)
   number_years: 25
+perennials:
+  yield_perennials: 15 # tDM perennials/ha/y
+  potential_co2_perennials: 2 # tCO2e/ha/y sequestred
+  yields_biofuels_1G: [38.1, 22.3, 11.9] # MWh/ha [Bioethanol barley, Sugar beet, Rape seed]
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -606,6 +610,7 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
+  perennial: false
   co2_vent: false
   central_heat_vent: false
   allam_cycle: false
@@ -1299,6 +1304,8 @@ plotting:
     CCS: '#f29dae'
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
+    perennial: '#008ffc'
+    perennial store: '#613700'
     co2 stored: '#f2385a'
     co2 sequestered: '#f2682f'
     co2: '#f29dae'
