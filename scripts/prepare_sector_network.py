@@ -1186,7 +1186,6 @@ def add_EW(n, costs):
     )
     EW_potentials = pd.read_csv(snakemake.input.EW_potentials, index_col=0)
     EW_potentials = EW_potentials.sum(axis=1)*snakemake.config["EW"]["max_land_usage"]
-    print(EW_potentials)
 
     n.madd(
         "Store",
