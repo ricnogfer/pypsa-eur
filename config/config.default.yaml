@@ -270,13 +270,25 @@ renewable:
 biochar:
   corine: [12, 13, 14] # CORINE Land Cover (CLC) codes that can be used for biochar
   potential_per_sqkm: 2000 # in tonnes (of biochar) (20t/ha)
-  co2_per_tonne: 2.182 # in tonnes  0.85 (tC/tbiochar) * 0.7 (%biochar >100y) * 44/12
+  co2_per_tonne_multiplier: 1 # in tonnes multiplier * (0.85 (tC/tbiochar) * 0.7 (%biochar >100y) * 44/12)
   max_land_usage: 0.2 # in percentage (in 2050)
   number_years: 25
 perennials:
-  yield_perennials: 15 # tDM perennials/ha/y
-  potential_co2_perennials: 2 # tCO2e/ha/y sequestred
-  yields_biofuels_1G: [38.1, 22.3, 11.9] # MWh/ha [Bioethanol barley, Sugar beet, Rape seed]
+  yield: 15 # tDM perennials/ha/y
+  potential_co2: 2 # tCO2e/ha/y sequestred
+  yield_biofuels_1G: [38.1, 22.3, 11.9] # MWh/ha [Bioethanol barley, Sugar beet, Rape seed]
+EW:
+  EW_hot: 
+    corine: [12, 13]
+    potential_per_sqkm: 839 # in tonnes
+    co2_per_tonne:  # in tonnes
+    climate: [23, 24, 28, 33, 34, 36]
+  EW_temperate:
+    corine: [12, 13]
+    potential_per_sqkm: 309 # in tonnes
+    co2_per_tonne: # in tonnes   
+    climate: [10, 11, 14, 15]
+  max_land_usage: 0.2 # in percentage
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -616,7 +628,8 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
-  perennial: false
+  perennials: false
+  EW: false
   co2_vent: false
   central_heat_vent: false
   allam_cycle: false
@@ -1310,8 +1323,10 @@ plotting:
     CCS: '#f29dae'
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
-    perennial: '#008ffc'
-    perennial store: '#613700'
+    perennials: '#008ffc'
+    perennials store: '#613700'
+    EW: '#ab6ae9'
+    EW store: '#fcba00'
     co2 stored: '#f2385a'
     co2 sequestered: '#f2682f'
     co2: '#f29dae'
