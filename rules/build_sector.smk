@@ -300,6 +300,25 @@ rule build_biochar_potentials:
         "../scripts/build_potentials.py"
 
 
+rule build_afforestation_potentials:
+    params:
+        component = "afforestation",
+    input:
+        corine_dataset = "data/bundle/corine/g100_clc12_V18_5.tif",
+        network_geojson = RESOURCES + "regions_onshore_elec_s{simpl}_{clusters}.geojson",
+    output:
+        csv_file = RESOURCES + "afforestation_potentials_s{simpl}_{clusters}.csv",
+        png_file = RESOURCES + "afforestation_potentials_s{simpl}_{clusters}.png",
+    log:
+        LOGS + "build_afforestation_potentials_s{simpl}_{clusters}.log",
+    resources:
+        mem_mb = 5000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_potentials.py"
+
+
 if config["sector"]["biomass_transport"]:
 
     rule build_biomass_transport_costs:
@@ -706,6 +725,7 @@ rule prepare_sector_network:
         co2="data/eea/UNFCCC_v23.csv",
         biomass_potentials=RESOURCES + "biomass_potentials_s{simpl}_{clusters}.csv",
         biochar_potentials=RESOURCES + "biochar_potentials_s{simpl}_{clusters}.csv",
+        afforestation_potentials=RESOURCES + "afforestation_potentials_s{simpl}_{clusters}.csv",
         heat_profile="data/heat_load_profile_BDEW.csv",
         costs="data/costs_{}.csv".format(config["costs"]["year"])
         if config["foresight"] == "overnight"
