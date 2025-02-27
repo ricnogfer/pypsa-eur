@@ -273,6 +273,18 @@ biochar:
   co2_per_tonne_multiplier: 1 # in tonnes multiplier * (0.85 (tC/tbiochar) * 0.7 (%biochar >100y) * 44/12)
   max_land_usage: 0.2 # in percentage (in 2050)
   number_years: 25
+EW:
+  EW_hot: 
+    corine: [12, 13]
+    potential_per_sqkm: 839 # in tonnes
+    co2_per_tonne:  # in tonnes
+    climate: [23, 24, 28, 33, 34, 36]
+  EW_temperate:
+    corine: [12, 13]
+    potential_per_sqkm: 309 # in tonnes
+    co2_per_tonne: # in tonnes   
+    climate: [10, 11, 14, 15]
+  max_land_usage: 0.2 # in percentage
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
@@ -606,6 +618,7 @@ sector:
   methanation: true
   coal_cc: false
   dac: true
+  EW: false
   co2_vent: false
   central_heat_vent: false
   allam_cycle: false
@@ -1299,6 +1312,8 @@ plotting:
     CCS: '#f29dae'
     CO2 sequestration: '#f29dae'
     DAC: '#ff5270'
+    EW: '#ab6ae9'
+    EW store: '#fcba00'
     co2 stored: '#f2385a'
     co2 sequestered: '#f2682f'
     co2: '#f29dae'
