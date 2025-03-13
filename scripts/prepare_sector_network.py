@@ -769,6 +769,53 @@ def add_allam_gas(n, costs):
     )
 
 
+def add_biochar(n):
+
+    logger.info("Adding biochar.")
+
+
+    # read biochar potentials from CSV file
+    biochar_potentials = pd.read_csv(snakemake.input.biochar_potentials).set_index("node")
+
+
+    # add CO2 biochar buses
+    n.madd("Bus",
+           spatial.nodes + " co2 biochar",
+           carrier = "co2 biochar",
+           unit = "t_co2"
+          )
+
+
+    # add CO2 biochar stores
+    co2_per_tonne = 1/costs.at["biochar pyrolysis", "biomass input"] * 1/costs.at["yield-biochar", "biomass input"] # tCO2 / tbiochar
+    n.madd("Store",
+           spatial.nodes + " co2 biochar",
+           bus = spatial.nodes + " co2 biochar",
+           carrier = "co2 biochar",
+           e_nom_extendable = True,
+           e_nom_max = biochar_potentials["potential"].values * co2_per_tonne * snakemake.config["biochar"]["co2_per_tonne_multiplier"] * snakemake.config["biochar"]["max_land_usage"]
+          )
+
+
+    # add CO2 biochar links
+    n.madd("Link",
+           spatial.nodes + " biochar",
+           bus0 = "co2 atmosphere",
+           bus1 = spatial.nodes + " co2 biochar",
+           bus2 = spatial.biomass.nodes,
+           bus3 = spatial.nodes,
+           bus4 = n.buses.index[n.buses.carrier == "urban central heat"],
+           carrier = "co2 biochar",
+           capital_cost = costs.at["biochar pyrolysis", "fixed"],
+           marginal_cost = costs.at["biochar pyrolysis", "VOM"],
+           efficiency = 1,
+           efficiency2 = -costs.at["biochar pyrolysis", "biomass input"],
+           efficiency3 = -costs.at["biochar pyrolysis", "electricity input"],
+           efficiency4 = costs.at["biochar pyrolysis", "heat output"],
+           p_nom_extendable = True
+          )
+
+
 def add_biomass_to_methanol(n, costs):
     n.add(
         "Link",
@@ -4712,6 +4759,9 @@ if __name__ == "__main__":
 
     if options["allam_cycle_gas"]:
         add_allam_gas(n, costs)
+
+    if options["biochar"]:
+        add_biochar(n)
 
     n = set_temporal_aggregation(
         n, snakemake.params.time_resolution, snakemake.input.snapshot_weightings

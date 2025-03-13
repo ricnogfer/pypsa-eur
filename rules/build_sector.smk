@@ -506,6 +506,25 @@ rule build_biomass_potentials:
         "../scripts/build_biomass_potentials.py"
 
 
+rule build_biochar_potentials:
+    params:
+        component = "biochar",
+    input:
+        corine_dataset = "data/bundle/corine/g100_clc12_V18_5.tif",
+        network_geojson = resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        csv_file = resources("biochar_potentials_s_{clusters}.csv"),
+        png_file = resources("biochar_potentials_s_{clusters}.png"),
+    log:
+        logs("build_biochar_potentials_s_{clusters}.log"),
+    resources:
+        mem_mb = 5000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_potentials.py"
+
+
 rule build_biomass_transport_costs:
     input:
         sc1="data/biomass_transport_costs_supplychain1.csv",
@@ -1173,6 +1192,11 @@ rule prepare_sector_network:
             resources("costs_{}.csv".format(config_provider("costs", "year")(w)))
             if config_provider("foresight")(w) == "overnight"
             else resources("costs_{planning_horizons}.csv")
+        ),
+        biochar_potentials=lambda w: (
+            resources("biochar_potentials_s_{clusters}.csv")
+            if config_provider("sector", "biochar")(w)
+            else []
         ),
         h2_cavern=resources("salt_cavern_potentials_s_{clusters}.csv"),
         busmap_s=resources("busmap_base_s.csv"),
