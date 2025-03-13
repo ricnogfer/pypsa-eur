@@ -816,6 +816,76 @@ def add_biochar(n):
           )
 
 
+def add_perennials(n, costs):
+
+    logger.info("Adding perennials.")
+
+    perennial_CO2_seq = (
+        snakemake.config["perennials"]["yield_perennials"]
+        / snakemake.config["perennials"]["potential_co2_perennials"]
+    )  # tDM perennials / tCO2e sequestred
+
+    nodes = pop_layout.index
+    n.add("Carrier", "perennial")
+    n.add("Carrier", "perennial store")
+
+    n.madd(
+        "Bus",
+        nodes + " perennials co2 store",
+        location=nodes,
+        carrier="perennial store",
+        unit="t_co2",
+    )
+
+
+    df_gbr = pd.DataFrame(index=n.snapshots, columns=["harvest"])
+    df_gbr["harvest"] = df_gbr.index.month.isin([4, 5, 6, 7, 8, 9, 10]).astype(int)
+    p_max_pu = pd.DataFrame(index=n.snapshots, columns=nodes)
+
+    for node in nodes:
+        p_max_pu[node] = df_gbr["harvest"]
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix=" perennials GBR",
+        bus0="co2 atmosphere",
+        bus1=nodes + " perennials co2 store",
+        bus2=nodes.values,
+        bus3=spatial.gas.biogas,
+        efficiency=1,
+        efficiency2=-costs.at['perennials gbr', "electricity-input"] * perennial_CO2_seq,
+        efficiency3=costs.at['perennials gbr', "biogas-output"] * perennial_CO2_seq,  
+        carrier="perennial",
+        p_nom_extendable=True,
+        p_max_pu=p_max_pu,
+        capital_cost=costs.at['perennials gbr', "fixed"] * perennial_CO2_seq,
+        marginal_cost=costs.at['perennials gbr', "VOM"] * perennial_CO2_seq, 
+        lifetime=costs.at['perennials gbr', "lifetime"],
+    )
+
+    biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
+
+    perennials_potentials_spatial = (
+        (
+            biomass_potentials.filter(regex='biofuels_1G')
+            / snakemake.config["perennials"]["yields_biofuels_1G"]
+        ).sum(axis=1)
+        * snakemake.config["perennials"]["potential_co2_perennials"]
+    )  # potential tCO2e seq
+
+    n.madd(
+        "Store",
+        nodes,
+        suffix=" CO2s_perennials",
+        bus=nodes + " perennials co2 store",
+        e_nom_extendable=True,  
+        e_nom_max=perennials_potentials_spatial, 
+        carrier="perennial store",
+        e_cyclic=False,
+    )
+
+
 def add_EW(n, costs):
 
     logger.info("Adding EW.")
@@ -4802,6 +4872,9 @@ if __name__ == "__main__":
 
     if options["biochar"]:
         add_biochar(n)
+
+    if options["perennials"]:
+        add_perennial(n, costs)
 
     if options["EW"]:
         add_EW(n, costs)

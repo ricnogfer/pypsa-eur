@@ -275,6 +275,11 @@ biochar:
   max_land_usage: 0.2 # in percentage (in 2050)
   number_years: 25
 
+perennials:
+  yield: 15 # tDM perennials/ha/y
+  potential_co2: 2 # tCO2e/ha/y sequestred
+  yield_biofuels_1G: [38.1, 22.3, 11.9] # MWh/ha [Bioethanol barley, Sugar beet, Rape seed]
+
 EW:
   EW_hot: 
     corine: [12, 13]
@@ -737,6 +742,7 @@ sector:
   biosng_cc: false
   bioH2: false
   biochar: false
+  perennials: true
   EW: false
   municipal_solid_waste: false
   limit_max_growth:
@@ -1352,6 +1358,8 @@ plotting:
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
     co2 biochar: '#007000
+    perennials: '#008ffc'
+    perennials store: '#613700'
     EW: '#ab6ae9'
     EW store: '#fcba00'
     # emissions
