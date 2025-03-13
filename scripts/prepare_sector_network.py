@@ -816,6 +816,46 @@ def add_biochar(n):
           )
 
 
+def add_EW(n, costs):
+
+    logger.info("Adding EW.")
+
+    nodes = pop_layout.index
+    n.add("Carrier", "EW")
+    n.add("Carrier", "EW store")
+
+    n.madd(
+        "Bus", nodes + " EW co2 store", location=nodes, carrier="EW", unit="t_co2",
+    )
+    EW_potentials = pd.read_csv(snakemake.input.EW_potentials, index_col=0)
+    EW_potentials = EW_potentials.sum(axis=1)*snakemake.config["EW"]["max_land_usage"]
+
+    n.madd(
+        "Store",
+        nodes,
+        suffix=" EW co2 store",
+        bus=nodes + " EW co2 store",
+        e_nom = EW_potentials,
+        carrier="EW store",
+    )
+
+    n.madd(
+        "Link",
+        nodes,
+        suffix= " EW",
+        bus0=nodes.values,
+        bus1="co2 atmosphere",
+        bus2= nodes + " EW co2 store",
+        carrier = "EW",
+        capital_cost = costs.at["Enhanced Weathering", "investment"]/costs.at["Enhanced Weathering", "electricity-input"],
+        marginal_cost = costs.at["Enhanced Weathering", "VOM"]/costs.at["Enhanced Weathering", "electricity-input"],
+        efficiency=-1/costs.at["Enhanced Weathering", "electricity-input"], 
+        efficiency2=1/costs.at["Enhanced Weathering", "electricity-input"],
+        p_nom_extendable=True,
+        lifetime = costs.at["Enhanced Weathering", "lifetime"],
+    )
+
+
 def add_biomass_to_methanol(n, costs):
     n.add(
         "Link",
@@ -4762,6 +4802,9 @@ if __name__ == "__main__":
 
     if options["biochar"]:
         add_biochar(n)
+
+    if options["EW"]:
+        add_EW(n, costs)
 
     n = set_temporal_aggregation(
         n, snakemake.params.time_resolution, snakemake.input.snapshot_weightings

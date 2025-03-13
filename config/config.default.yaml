@@ -275,6 +275,19 @@ biochar:
   max_land_usage: 0.2 # in percentage (in 2050)
   number_years: 25
 
+EW:
+  EW_hot: 
+    corine: [12, 13]
+    potential_per_sqkm: 839 # in tonnes
+    co2_per_tonne:  # in tonnes
+    climate: [23, 24, 28, 33, 34, 36]
+  EW_temperate:
+    corine: [12, 13]
+    potential_per_sqkm: 309 # in tonnes
+    co2_per_tonne: # in tonnes   
+    climate: [10, 11, 14, 15]
+  max_land_usage: 0.2 # in percentage
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
   unit_commitment: false
@@ -724,6 +737,7 @@ sector:
   biosng_cc: false
   bioH2: false
   biochar: false
+  EW: false
   municipal_solid_waste: false
   limit_max_growth:
     enable: false
@@ -1338,6 +1352,8 @@ plotting:
     co2 vent: '#ffd4dc'
     CO2 pipeline: '#f5627f'
     co2 biochar: '#007000
+    EW: '#ab6ae9'
+    EW store: '#fcba00'
     # emissions
     process emissions CC: '#000000'
     process emissions: '#222222'
