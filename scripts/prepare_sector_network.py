@@ -821,8 +821,8 @@ def add_perennials(n, costs):
     logger.info("Adding perennials.")
 
     perennial_CO2_seq = (
-        snakemake.config["perennials"]["yield_perennials"]
-        / snakemake.config["perennials"]["potential_co2_perennials"]
+        snakemake.config["perennials"]["yield"]
+        / snakemake.config["perennials"]["potential_co2"]
     )  # tDM perennials / tCO2e sequestred
 
     nodes = pop_layout.index
@@ -4874,7 +4874,7 @@ if __name__ == "__main__":
         add_biochar(n)
 
     if options["perennials"]:
-        add_perennial(n, costs)
+        add_perennials(n, costs)
 
     if options["EW"]:
         add_EW(n, costs)
