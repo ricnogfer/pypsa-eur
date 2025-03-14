@@ -869,9 +869,9 @@ def add_perennials(n, costs):
     perennials_potentials_spatial = (
         (
             biomass_potentials.filter(regex='biofuels_1G')
-            / snakemake.config["perennials"]["yields_biofuels_1G"]
+            / snakemake.config["perennials"]["yield_biofuels_1G"]
         ).sum(axis=1)
-        * snakemake.config["perennials"]["potential_co2_perennials"]
+        * snakemake.config["perennials"]["potential_co2"]
     )  # potential tCO2e seq
 
     n.madd(
