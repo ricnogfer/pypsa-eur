@@ -28,7 +28,7 @@ if __name__ == "__main__":
         baseurl = f"https://raw.githubusercontent.com/{version}/outputs/"
     else:
         #baseurl = f"https://raw.githubusercontent.com/PyPSA/technology-data/{version}/outputs/"
-    	baseurl = "https://github.com/BertoGBG/technology-data/tree/CO2_stores_latest/"
+    	baseurl = "https://raw.githubusercontent.com/BertoGBG/technology-data/refs/heads/CO2_stores_latest/outputs/"
     filepath = Path(snakemake.output[0])
     url = baseurl + filepath.name
 
