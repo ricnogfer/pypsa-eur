@@ -787,7 +787,7 @@ def add_biochar(n):
 
 
     # add CO2 biochar stores
-    co2_per_tonne = 1/costs.at["biochar pyrolysis", "biomass input"] * 1/costs.at["yield-biochar", "biomass input"] # tCO2 / tbiochar
+    co2_per_tonne = 1/costs.at["biochar pyrolysis", "biomass input"] * 1/costs.at["biochar pyrolysis", "yield-biochar"] # tCO2 / tbiochar
     n.madd("Store",
            spatial.nodes + " co2 biochar",
            bus = spatial.nodes + " co2 biochar",
