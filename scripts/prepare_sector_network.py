@@ -798,22 +798,29 @@ def add_biochar(n):
 
 
     # add CO2 biochar links
-    n.madd("Link",
-           spatial.nodes + " biochar",
-           bus0 = "co2 atmosphere",
-           bus1 = spatial.nodes + " co2 biochar",
-           bus2 = spatial.biomass.nodes,
-           bus3 = spatial.nodes,
-           bus4 = n.buses.index[n.buses.carrier == "urban central heat"],
-           carrier = "co2 biochar",
-           capital_cost = costs.at["biochar pyrolysis", "fixed"],
-           marginal_cost = costs.at["biochar pyrolysis", "VOM"],
-           efficiency = 1,
-           efficiency2 = -costs.at["biochar pyrolysis", "biomass input"],
-           efficiency3 = -costs.at["biochar pyrolysis", "electricity input"],
-           efficiency4 = costs.at["biochar pyrolysis", "heat output"],
-           p_nom_extendable = True
-          )
+    for node in spatial.nodes:
+        heat_bus = node + " urban central heat"
+        if heat_bus in n.buses:
+            if len(spatial.biomass.nodes) == 1:
+                biomass_bus = spatial.biomass.nodes
+            else:
+                biomass_bus = node + " solid biomass"
+            n.add("Link",
+                  node + " biochar",
+                  bus0 = "co2 atmosphere",
+                  bus1 = node + " co2 biochar",
+                  bus2 = biomass_bus,
+                  bus3 = node,
+                  bus4 = heat_bus,
+                  carrier = "co2 biochar",
+                  capital_cost = costs.at["biochar pyrolysis", "fixed"],
+                  marginal_cost = costs.at["biochar pyrolysis", "VOM"],
+                  efficiency = 1,
+                  efficiency2 = -costs.at["biochar pyrolysis", "biomass input"],
+                  efficiency3 = -costs.at["biochar pyrolysis", "electricity input"],
+                  efficiency4 = costs.at["biochar pyrolysis", "heat output"],
+                  p_nom_extendable = True
+                 )
 
 
 def add_perennials(n, costs):
