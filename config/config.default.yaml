@@ -419,6 +419,12 @@ biomass:
     - Poplar
     - FuelwoodRW
     - C&P_RW
+    biofuels_1Gbioethanol:
+    - Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+    biofuels_1Gsugar:
+    - Sugar from sugar beet
+    biofuels_1Grs:
+    - Rape seed
     biogas:
     - Manure solid, liquid
     - Sludge
