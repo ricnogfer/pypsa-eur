@@ -509,8 +509,9 @@ rule build_biomass_potentials:
 rule build_biochar_potentials:
     params:
         component = "biochar",
+        resolution = 250,
     input:
-        corine_dataset = "data/bundle/corine/g100_clc12_V18_5.tif",
+        corine_dataset = "data/bundle/corine/g250_clc06_V18_5.tif",
         network_geojson = resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
         csv_file = resources("biochar_potentials_s_{clusters}.csv"),
@@ -528,6 +529,7 @@ rule build_biochar_potentials:
 rule build_EW_potentials:
     params:
         component = "EW",
+        resolution = 250,
     input:
         corine_dataset = "data/bundle/corine/g250_clc06_V18_5.tif",
         network_geojson = resources("regions_onshore_base_s_{clusters}.geojson"),
