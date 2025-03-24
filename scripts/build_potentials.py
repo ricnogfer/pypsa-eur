@@ -12,7 +12,7 @@ import yaml
 
 
 
-def build_potentials(config_yaml, network_geojson, corine_dataset, component, csv_file, png_file, log):
+def build_potentials(config_yaml, network_geojson, corine_dataset, resolution, component, csv_file, png_file, log):
 
     # load config yaml file representing the PyPSA-Eur configuration
     handle = open(config_yaml)
@@ -32,7 +32,7 @@ def build_potentials(config_yaml, network_geojson, corine_dataset, component, cs
 
 
     # select CORINE Land Cover (CLC) codes (specified in the config yaml file)
-    excluder = ExclusionContainer(crs = 3035)
+    excluder = ExclusionContainer(crs = 3035, res = resolution)
     excluder.add_raster(corine_dataset, codes = config[component]["corine"], invert = True, crs = 3035)
     cell_area = excluder.res**2
 
@@ -43,12 +43,14 @@ def build_potentials(config_yaml, network_geojson, corine_dataset, component, cs
         shape = nodes_geojson.to_crs(excluder.crs).loc[[node]].geometry
         band, transform = shape_availability(shape, excluder)
         selected_cells = band.sum() * cell_area / 1e6   # in sqkm
-        potential = selected_cells * config[component]["potential_per_sqkm"]
+        if isinstance(config[component]["potential_per_sqkm"], dict):
+            country = node[:2]
+            potential = selected_cells * config[component]["potential_per_sqkm"][country]
+        else:
+            potential = selected_cells * config[component]["potential_per_sqkm"]
         df.loc[len(df)] = [node, potential]
-        #print("Node=%s" % node)
-        #print("Area (km2)=%.2f" % (shape.geometry.area.sum() / 1e6))
-        #print("Potential=%.2f" % potential)
-        #print()
+        if log is True:
+            logger.info("Node=%s * Area (sqkm)=%.1f * Potential=%.1f" % (node, shape.geometry.area.sum() / 1e6, potential))
 
 
     # save potentials into a CSV file
@@ -75,14 +77,10 @@ def build_potentials(config_yaml, network_geojson, corine_dataset, component, cs
 
 if __name__ == "__main__":
 
-
-    # mock Snakemake in case Python module is called from a terminal
-    if "snakemake" not in globals():
-        from _helpers import mock_snakemake
-
-        snakemake = mock_snakemake("build_potentials")
-
-
     # build and save potentials into CSV and PNG files
-    build_potentials("config/config.yaml", snakemake.input["network_geojson"], snakemake.input["corine_dataset"], snakemake.params["component"], snakemake.output["csv_file"], snakemake.output["png_file"], True)
+    if "snakemake" in globals():
+        build_potentials("config/config.yaml", snakemake.input["network_geojson"], snakemake.input["corine_dataset"], snakemake.params["resolution"], snakemake.params["component"], snakemake.output["csv_file"], snakemake.output["png_file"], True)
+    else:
+        build_potentials("config.yaml", "regions_onshore_base_s_39.geojson", "g250_clc06_V18_5.tif", 250, "afforestation", "potentials.csv", "potentials.png", True)
+
 
