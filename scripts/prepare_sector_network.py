@@ -769,7 +769,7 @@ def add_allam_gas(n, costs):
     )
 
 
-def add_biochar(n):
+def add_biochar(n, costs):
 
     logger.info("Adding biochar.")
 
@@ -803,7 +803,7 @@ def add_biochar(n):
             biomass_bus = spatial.biomass.nodes
         else:
             biomass_bus = node + " solid biomass"
-        if node + " urban central heat" in n.buses.index:
+        if snakemake.config["sector"]["biochar"]["heat_output"] and (node + " urban central heat") in n.buses.index:
             heat_bus = node + " urban central heat"
         else:
             heat_bus = None
@@ -4879,8 +4879,8 @@ if __name__ == "__main__":
     if options["allam_cycle_gas"]:
         add_allam_gas(n, costs)
 
-    if options["biochar"]:
-        add_biochar(n)
+    if options["biochar"]["enable"]:
+        add_biochar(n, costs)
 
     if options["perennials"]:
         add_perennials(n, costs)

@@ -747,7 +747,9 @@ sector:
   biosng: false
   biosng_cc: false
   bioH2: false
-  biochar: false
+  biochar:
+    enable: true
+    heat_output: true
   perennials: false
   EW: false
   municipal_solid_waste: false
