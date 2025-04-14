@@ -935,6 +935,54 @@ def add_EW(n, costs):
     )
 
 
+def add_afforestation(n, costs):
+
+    logger.info("Adding afforestation.")
+
+
+    # read afforestation potentials from CSV file
+    afforestation_potentials = pd.read_csv(snakemake.input.afforestation_potentials).set_index("node")
+
+
+    # add CO2 afforestation bus
+    n.madd("Bus",
+           spatial.nodes + " co2 afforestation",
+           carrier = "co2 afforestation",
+           unit = "t_co2"
+          )
+
+
+    # add CO2 afforestation store
+    n.madd("Store",
+           spatial.nodes + " co2 afforestation",
+           bus = spatial.nodes + " co2 afforestation",
+           carrier = "co2 afforestation",
+           e_nom_extendable = True,
+           e_nom_max = afforestation_potentials["potential"].values * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"] / snakemake.config["afforestation"]["number_years"]
+          )
+
+
+    # calculate marginal cost for each country based on its forest (dry) biomass potential/density
+    marginal_costs = []
+    for node in spatial.nodes:
+        country = node[:2]
+        potential = snakemake.config["afforestation"]["potential_per_sqkm"][country]
+        marginal_costs.append(snakemake.config["afforestation"]["cost_per_sqkm"] / potential / snakemake.config["afforestation"]["co2_per_tonne"])
+
+    #print("cost_per_sqkm=%d * eur/tco2 = %d" % (snakemake.config["afforestation"]["cost_per_sqkm"], snakemake.config["afforestation"]["cost_per_sqkm"] / 11700 / snakemake.config["afforestation"]["co2_per_tonne"]))
+
+    # add CO2 afforestation link
+    n.madd("Link",
+           spatial.nodes + " afforestation",
+           bus0 = "co2 atmosphere",
+           bus1 = spatial.nodes + " co2 afforestation",
+           carrier = "co2 afforestation",
+           marginal_cost = marginal_costs,
+           efficiency = 1,
+           p_nom_extendable = True
+          )
+
+
 def add_biomass_to_methanol(n, costs):
     n.add(
         "Link",
@@ -4887,6 +4935,9 @@ if __name__ == "__main__":
 
     if options["EW"]:
         add_EW(n, costs)
+
+    if options["afforestation"]:
+        add_afforestation(n, costs)
 
     n = set_temporal_aggregation(
         n, snakemake.params.time_resolution, snakemake.input.snapshot_weightings

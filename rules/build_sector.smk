@@ -547,6 +547,26 @@ rule build_EW_potentials:
         "../scripts/build_potentials_EW.py" 
 
 
+rule build_afforestation_potentials:
+    params:
+        component = "afforestation",
+        resolution = 250,
+    input:
+        corine_dataset = "data/bundle/corine/g250_clc06_V18_5.tif",
+        network_geojson = resources("regions_onshore_base_s_{clusters}.geojson"),
+    output:
+        csv_file = resources("afforestation_potentials_s_{clusters}.csv"),
+        png_file = resources("afforestation_potentials_s_{clusters}.png"),
+    log:
+        logs("build_afforestation_potentials_s_{clusters}.log"),
+    resources:
+        mem_mb = 5000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_potentials.py"
+
+
 rule build_biomass_transport_costs:
     input:
         sc1="data/biomass_transport_costs_supplychain1.csv",
@@ -1223,6 +1243,11 @@ rule prepare_sector_network:
         EW_potentials=lambda w: (
             resources("EW_potentials_s_{clusters}.csv")
             if config_provider("sector", "EW")(w)
+            else []
+        ),
+        afforestation_potentials=lambda w: (
+            resources("afforestation_potentials_s_{clusters}.csv")
+	    if config_provider("sector", "afforestation")(w)
             else []
         ),
         h2_cavern=resources("salt_cavern_potentials_s_{clusters}.csv"),
