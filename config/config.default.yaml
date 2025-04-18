@@ -793,7 +793,7 @@ sector:
     heat_output: false
   perennials: false
   EW: false
-  afforestation: true
+  afforestation: false
   municipal_solid_waste: false
   limit_max_growth:
     enable: false
