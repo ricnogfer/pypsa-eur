@@ -803,17 +803,34 @@ def add_biochar(n, costs):
             biomass_bus = spatial.biomass.nodes
         else:
             biomass_bus = node + " solid biomass"
-        if snakemake.config["sector"]["biochar"]["heat_output"] and (node + " urban central heat") in n.buses.index:
-            heat_bus = node + " urban central heat"
+        if snakemake.config["sector"]["heating"] and snakemake.config["sector"]["biochar"]["heat_output"] and (node + " urban central heat") in n.buses.index:
+            biochar_heat_bus = node + " biochar heat"
+            n.add("Bus",
+                  biochar_heat_bus,
+                  carrier = "biochar heat"
+                 )
+            n.add("Store",
+                  biochar_heat_bus,
+                  bus = biochar_heat_bus,
+                  e_nom_extendable = True,
+                  carrier = "biochar heat"
+                 )
+            n.add("Link",
+                  biochar_heat_bus,
+                  bus0 = biochar_heat_bus,
+                  bus1 = node + " urban central heat",
+                  p_nom_extendable = True,
+                  carrier = "biochar heat"
+                 )
         else:
-            heat_bus = None
+            biochar_heat_bus = None
         n.add("Link",
               node + " biochar",
               bus0 = "co2 atmosphere",
               bus1 = node + " co2 biochar",
               bus2 = biomass_bus,
               bus3 = node,
-              bus4 = heat_bus,
+              bus4 = biochar_heat_bus,
               carrier = "co2 biochar",
               capital_cost = costs.at["biochar pyrolysis", "fixed"],
               marginal_cost = costs.at["biochar pyrolysis", "VOM"],
@@ -928,7 +945,7 @@ def add_EW(n, costs):
         carrier = "EW",
         capital_cost = costs.at["Enhanced Weathering", "investment"]/costs.at["Enhanced Weathering", "electricity-input"],
         marginal_cost = costs.at["Enhanced Weathering", "VOM"]/costs.at["Enhanced Weathering", "electricity-input"],
-        efficiency=-1/costs.at["Enhanced Weathering", "electricity-input"], 
+        efficiency=-1/costs.at["Enhanced Weathering", "electricity-input"],
         efficiency2=1/costs.at["Enhanced Weathering", "electricity-input"],
         p_nom_extendable=True,
         lifetime = costs.at["Enhanced Weathering", "lifetime"],
