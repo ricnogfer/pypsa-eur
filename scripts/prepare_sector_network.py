@@ -779,22 +779,22 @@ def add_biochar(n, costs):
 
 
     # add CO2 biochar buses
-    n.madd("Bus",
-           spatial.nodes + " co2 biochar",
-           carrier = "co2 biochar",
-           unit = "t_co2"
-          )
+    n.add("Bus",
+          spatial.nodes + " co2 biochar",
+          carrier = "co2 biochar",
+          unit = "t_co2"
+         )
 
 
     # add CO2 biochar stores
     co2_per_tonne = 1/costs.at["biochar pyrolysis", "biomass input"] * 1/costs.at["biochar pyrolysis", "yield-biochar"] # tCO2 / tbiochar
-    n.madd("Store",
-           spatial.nodes + " co2 biochar",
-           bus = spatial.nodes + " co2 biochar",
-           carrier = "co2 biochar",
-           e_nom_extendable = True,
-           e_nom_max = biochar_potentials["potential"].values * co2_per_tonne * snakemake.config["biochar"]["co2_per_tonne_multiplier"] * snakemake.config["biochar"]["max_land_usage"]
-          )
+    n.add("Store",
+          spatial.nodes + " co2 biochar",
+          bus = spatial.nodes + " co2 biochar",
+          carrier = "co2 biochar",
+          e_nom_extendable = True,
+          e_nom_max = biochar_potentials["potential"].values * co2_per_tonne * snakemake.config["biochar"]["co2_per_tonne_multiplier"] * snakemake.config["biochar"]["max_land_usage"]
+         )
 
 
     # add CO2 biochar links
@@ -855,12 +855,12 @@ def add_perennials(n, costs):
     n.add("Carrier", "perennial")
     n.add("Carrier", "perennial store")
 
-    n.madd(
-        "Bus",
-        nodes + " perennials co2 store",
-        location=nodes,
-        carrier="perennial store",
-        unit="t_co2",
+    n.add(
+       "Bus",
+       nodes + " perennials co2 store",
+       location=nodes,
+       carrier="perennial store",
+       unit="t_co2",
     )
 
 
@@ -871,23 +871,23 @@ def add_perennials(n, costs):
     for node in nodes:
         p_max_pu[node] = df_gbr["harvest"]
 
-    n.madd(
-        "Link",
-        nodes,
-        suffix=" perennials GBR",
-        bus0="co2 atmosphere",
-        bus1=nodes + " perennials co2 store",
-        bus2=nodes.values,
-        bus3=spatial.gas.biogas,
-        efficiency=1,
-        efficiency2=-costs.at['perennials gbr', "electricity-input"] * perennial_CO2_seq,
-        efficiency3=costs.at['perennials gbr', "biogas-output"] * perennial_CO2_seq,  
-        carrier="perennial",
-        p_nom_extendable=True,
-        p_max_pu=p_max_pu,
-        capital_cost=costs.at['perennials gbr', "fixed"] * perennial_CO2_seq,
-        marginal_cost=costs.at['perennials gbr', "VOM"] * perennial_CO2_seq, 
-        lifetime=costs.at['perennials gbr', "lifetime"],
+    n.add(
+       "Link",
+       nodes,
+       suffix=" perennials GBR",
+       bus0="co2 atmosphere",
+       bus1=nodes + " perennials co2 store",
+       bus2=nodes.values,
+       bus3=spatial.gas.biogas,
+       efficiency=1,
+       efficiency2=-costs.at['perennials gbr', "electricity-input"] * perennial_CO2_seq,
+       efficiency3=costs.at['perennials gbr', "biogas-output"] * perennial_CO2_seq,  
+       carrier="perennial",
+       p_nom_extendable=True,
+       p_max_pu=p_max_pu,
+       capital_cost=costs.at['perennials gbr', "fixed"] * perennial_CO2_seq,
+       marginal_cost=costs.at['perennials gbr', "VOM"] * perennial_CO2_seq, 
+       lifetime=costs.at['perennials gbr', "lifetime"],
     )
 
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
@@ -900,15 +900,15 @@ def add_perennials(n, costs):
         * snakemake.config["perennials"]["potential_co2"]
     )  # potential tCO2e seq
 
-    n.madd(
-        "Store",
-        nodes,
-        suffix=" CO2s_perennials",
-        bus=nodes + " perennials co2 store",
-        e_nom_extendable=True,  
-        e_nom_max=perennials_potentials_spatial, 
-        carrier="perennial store",
-        e_cyclic=False,
+    n.add(
+       "Store",
+       nodes,
+       suffix=" CO2s_perennials",
+       bus=nodes + " perennials co2 store",
+       e_nom_extendable=True,  
+       e_nom_max=perennials_potentials_spatial, 
+       carrier="perennial store",
+       e_cyclic=False,
     )
 
 
@@ -920,35 +920,35 @@ def add_EW(n, costs):
     n.add("Carrier", "EW")
     n.add("Carrier", "EW store")
 
-    n.madd(
-        "Bus", nodes + " EW co2 store", location=nodes, carrier="EW", unit="t_co2",
+    n.add(
+       "Bus", nodes + " EW co2 store", location=nodes, carrier="EW", unit="t_co2",
     )
     EW_potentials = pd.read_csv(snakemake.input.EW_potentials, index_col=0)
     EW_potentials = EW_potentials.sum(axis=1)*snakemake.config["EW"]["max_land_usage"]
 
-    n.madd(
-        "Store",
-        nodes,
-        suffix=" EW co2 store",
-        bus=nodes + " EW co2 store",
-        e_nom = EW_potentials,
-        carrier="EW store",
+    n.add(
+       "Store",
+       nodes,
+       suffix=" EW co2 store",
+       bus=nodes + " EW co2 store",
+       e_nom = EW_potentials,
+       carrier="EW store",
     )
 
-    n.madd(
-        "Link",
-        nodes,
-        suffix= " EW",
-        bus0=nodes.values,
-        bus1="co2 atmosphere",
-        bus2= nodes + " EW co2 store",
-        carrier = "EW",
-        capital_cost = costs.at["Enhanced Weathering", "investment"]/costs.at["Enhanced Weathering", "electricity-input"],
-        marginal_cost = costs.at["Enhanced Weathering", "VOM"]/costs.at["Enhanced Weathering", "electricity-input"],
-        efficiency=-1/costs.at["Enhanced Weathering", "electricity-input"],
-        efficiency2=1/costs.at["Enhanced Weathering", "electricity-input"],
-        p_nom_extendable=True,
-        lifetime = costs.at["Enhanced Weathering", "lifetime"],
+    n.add(
+       "Link",
+       nodes,
+       suffix= " EW",
+       bus0=nodes.values,
+       bus1="co2 atmosphere",
+       bus2= nodes + " EW co2 store",
+       carrier = "EW",
+       capital_cost = costs.at["Enhanced Weathering", "investment"]/costs.at["Enhanced Weathering", "electricity-input"],
+       marginal_cost = costs.at["Enhanced Weathering", "VOM"]/costs.at["Enhanced Weathering", "electricity-input"],
+       efficiency=-1/costs.at["Enhanced Weathering", "electricity-input"],
+       efficiency2=1/costs.at["Enhanced Weathering", "electricity-input"],
+       p_nom_extendable=True,
+       lifetime = costs.at["Enhanced Weathering", "lifetime"],
     )
 
 
@@ -962,21 +962,21 @@ def add_afforestation(n, costs):
 
 
     # add CO2 afforestation bus
-    n.madd("Bus",
-           spatial.nodes + " co2 afforestation",
-           carrier = "co2 afforestation",
-           unit = "t_co2"
-          )
+    n.add("Bus",
+          spatial.nodes + " co2 afforestation",
+          carrier = "co2 afforestation",
+          unit = "t_co2"
+         )
 
 
     # add CO2 afforestation store
-    n.madd("Store",
-           spatial.nodes + " co2 afforestation",
-           bus = spatial.nodes + " co2 afforestation",
-           carrier = "co2 afforestation",
-           e_nom_extendable = True,
-           e_nom_max = afforestation_potentials["potential"].values * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"] / snakemake.config["afforestation"]["number_years"]
-          )
+    n.add("Store",
+          spatial.nodes + " co2 afforestation",
+          bus = spatial.nodes + " co2 afforestation",
+          carrier = "co2 afforestation",
+          e_nom_extendable = True,
+          e_nom_max = afforestation_potentials["potential"].values * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"] / snakemake.config["afforestation"]["number_years"]
+         )
 
 
     # calculate marginal cost for each country based on its forest (dry) biomass potential/density
@@ -989,15 +989,15 @@ def add_afforestation(n, costs):
     #print("cost_per_sqkm=%d * eur/tco2 = %d" % (snakemake.config["afforestation"]["cost_per_sqkm"], snakemake.config["afforestation"]["cost_per_sqkm"] / 11700 / snakemake.config["afforestation"]["co2_per_tonne"]))
 
     # add CO2 afforestation link
-    n.madd("Link",
-           spatial.nodes + " afforestation",
-           bus0 = "co2 atmosphere",
-           bus1 = spatial.nodes + " co2 afforestation",
-           carrier = "co2 afforestation",
-           marginal_cost = marginal_costs,
-           efficiency = 1,
-           p_nom_extendable = True
-          )
+    n.add("Link",
+          spatial.nodes + " afforestation",
+          bus0 = "co2 atmosphere",
+          bus1 = spatial.nodes + " co2 afforestation",
+          carrier = "co2 afforestation",
+          marginal_cost = marginal_costs,
+          efficiency = 1,
+          p_nom_extendable = True
+         )
 
 
 def add_biomass_to_methanol(n, costs):
