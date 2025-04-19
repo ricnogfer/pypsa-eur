@@ -791,6 +791,7 @@ sector:
   biochar:
     enable: false
     heat_output: false
+    transport: false
   perennials: false
   EW: false
   afforestation: false
