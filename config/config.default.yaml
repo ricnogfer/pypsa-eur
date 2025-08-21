@@ -441,7 +441,7 @@ energy:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#biomass
 biomass:
-  year: 2030
+  year: 2035
   scenario: ENS_Med
   classes:
     solid biomass:
