@@ -1029,18 +1029,19 @@ def add_afforestation(n, costs):
           bus = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
           e_nom_extendable = True,
-          e_nom_max = afforestation_potentials["potential"].values * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"] / snakemake.config["afforestation"]["number_years"]
+          e_nom_max = afforestation_potentials["potential"].values * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"] / costs.at["Afforestation", "lifetime"]
          )
 
 
-    # calculate marginal cost for each country based on its forest (dry) biomass potential/density
-    marginal_costs = []
+    # calculate capital cost for each country based on its forest (dry) biomass potential/density
+    cost = costs.at["Afforestation", "fixed"] * 100   # EUR/sqkm
+    capital_costs = []
     for node in spatial.nodes:
         country = node[:2]
         potential = snakemake.config["afforestation"]["potential_per_sqkm"][country]
-        marginal_costs.append(snakemake.config["afforestation"]["cost_per_sqkm"] / potential / snakemake.config["afforestation"]["co2_per_tonne"])
+        capital_costs.append(cost / potential / snakemake.config["afforestation"]["co2_per_tonne"])
 
-    #print("cost_per_sqkm=%d * eur/tco2 = %d" % (snakemake.config["afforestation"]["cost_per_sqkm"], snakemake.config["afforestation"]["cost_per_sqkm"] / 11700 / snakemake.config["afforestation"]["co2_per_tonne"]))
+    #print("capital_cost_per_sqkm=%d * eur/tco2 = %d" % (cost, cost / 11700 / snakemake.config["afforestation"]["co2_per_tonne"]))
 
     # add CO2 afforestation link
     n.add("Link",
@@ -1048,9 +1049,12 @@ def add_afforestation(n, costs):
           bus0 = "co2 atmosphere",
           bus1 = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
-          marginal_cost = marginal_costs,
+          capital_cost = capital_costs,
           efficiency = 1,
-          p_nom_extendable = True
+          p_min_pu = 1,
+          p_max_pu = 1,
+          p_nom_extendable = True,
+          lifetime = costs.at["Afforestation", "lifetime"]
          )
 
 

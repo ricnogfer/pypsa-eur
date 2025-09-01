@@ -294,7 +294,6 @@ EW:
 
 afforestation:
   corine: [29] # CORINE Land Cover (CLC) codes that can be used for afforestation
-  cost_per_sqkm: 2000000 # in EUR ((3940 + 35700) / 2 * 100)
   potential_per_sqkm: # in tonnes (of dry biomass)
     'AL': 9427
     'AT': 18672
@@ -332,7 +331,6 @@ afforestation:
     'XK': 11700 # given that no datapoint exists for Kosovo, the average value across Europe is taken instead
   co2_per_tonne: 1.83 # in tonnes (0.5 * 44.01 / 12.01)
   max_land_usage: 0.5 # in percentage
-  number_years: 25
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
