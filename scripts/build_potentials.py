@@ -38,17 +38,19 @@ def build_potentials(config_yaml, network_geojson, corine_dataset, resolution, c
 
 
     # calculate potential per node
-    df = pandas.DataFrame(columns = ["node", "potential"])
+    df = pandas.DataFrame(columns = ["node", "potential", "area", "coverage"])
     for node in nodes_geojson.index:
         shape = nodes_geojson.to_crs(excluder.crs).loc[[node]].geometry
         band, transform = shape_availability(shape, excluder)
         selected_cells = band.sum() * cell_area / 1e6   # in sqkm
+        area = shape.geometry.area.sum() / 1e6   # in sqkm
+        coverage = selected_cells / area   # in fraction
         if isinstance(config[component]["potential_per_sqkm"], dict):
             country = node[:2]
             potential = selected_cells * config[component]["potential_per_sqkm"][country]
         else:
             potential = selected_cells * config[component]["potential_per_sqkm"]
-        df.loc[len(df)] = [node, potential]
+        df.loc[len(df)] = [node, potential, area, coverage]
         if log is True:
             logger.info("Node=%s * Area (sqkm)=%.1f * Potential=%.1f" % (node, shape.geometry.area.sum() / 1e6, potential))
 
