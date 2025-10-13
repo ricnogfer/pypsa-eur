@@ -833,7 +833,6 @@ def add_biochar(n, costs):
                 biochar_heat_out = node + " biochar heat out"
 
                 biochar_heat_buses.append(biochar_heat_bus)
-                biochar_heat_buses.append(biochar_heat_out)
 
                 n.add("Bus",
                       biochar_heat_bus,
