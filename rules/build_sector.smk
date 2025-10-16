@@ -588,7 +588,6 @@ rule build_afforestation_potentials:
 
 rule get_afforestation_nuts2_rates:
     input:
-        #afforestation_nuts2_rates = storage("https://raw.githubusercontent.com/BertoGBG/CO2-stores-preprocessing/refs/heads/main/afforestation/data/afforestation/afforestation_nuts2.csv"),
     output:
         csv_file = resources("afforestation_nuts2.csv"),
     log:
