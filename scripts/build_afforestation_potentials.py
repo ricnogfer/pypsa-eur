@@ -27,6 +27,13 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
     nuts2 = geopandas.read_file(nuts2_geojson)
     corine_potentials = pandas.read_csv(afforestation_corine_potentials_csv_file).set_index("node")
     nuts2_rates = pandas.read_csv(afforestation_nuts2_rates_csv_file).set_index("NUTS2")
+    
+    
+    # harmonize NUTS2 indexes against the network indexes
+    nuts2["NUTS_ID"] = nuts2["NUTS_ID"].apply(lambda x: "GR%s" % x[2:] if x[:2] == "EL" else x)
+    nuts2["NUTS_ID"] = nuts2["NUTS_ID"].apply(lambda x: "GB%s" % x[2:] if x[:2] == "UK" else x)
+    nuts2_rates = nuts2_rates.rename(index = lambda x: "GR%s" % x[2:] if x[:2] == "EL" else x)
+    nuts2_rates = nuts2_rates.rename(index = lambda x: "GB%s" % x[2:] if x[:2] == "UK" else x)
 
 
     # create data frame to store afforestation potential for each node
@@ -39,24 +46,29 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
         # get node name and geometry
         region = network.iloc[i]
         node_name = region["name"]
-        node_geometry = geopandas.GeoSeries(region["geometry"])
-        node_geometry.crs = nuts2.crs
+        node_geometry = geopandas.GeoSeries(region["geometry"], crs = 3035)
 
         # iterate through NUTS2 codes
         node_afforestation_potential = 0
         for j in range(len(nuts2)):
 
-            # get NUTS2 geometry
+            # get NUTS2 row        
             nuts2_row = nuts2.iloc[j]
-            nuts2_geometry = geopandas.GeoSeries(nuts2_row["geometry"])
+            nuts2_name = nuts2_row["NUTS_ID"]
+
+            # check that NUTS2 belong to the node's country
+            if node_name[:2] != nuts2_name[:2]:
+                continue
+
+            # get NUTS2 geometry
+            nuts2_geometry = geopandas.GeoSeries(nuts2_row["geometry"], crs = 3035)
 
             # calculate proportion of intersection between NUTS2 geometry and node geometry
             intersection = nuts2_geometry.intersection(node_geometry.iloc[0])
-            proportion = float(intersection.area.iloc[0]) / float(nuts2_geometry.area.iloc[0])
+            proportion = float(intersection.area.iloc[0]) / float(node_geometry.area.iloc[0])
 
             # calculate afforestation potential based on intersection and aggregate this potential to the node's afforestation potential
-            node_afforestation_potential += (corine_potentials.loc[node_name]["potential [sqkm]"] * 100) * nuts2_rates.loc[nuts2_row["NUTS_ID"]]["affo rate (t/ha/y)"] * proportion
-
+            node_afforestation_potential += (corine_potentials.loc[node_name]["potential [sqkm]"] * 100) * nuts2_rates.loc[nuts2_name]["affo rate (t/ha/y)"] * proportion
 
         # add node afforestation potential into data frame
         if log is True:
