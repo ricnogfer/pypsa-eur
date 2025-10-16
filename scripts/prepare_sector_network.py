@@ -841,7 +841,7 @@ def add_biochar(n, costs):
                 n.add("Bus",
                       biochar_heat_out,
                       carrier = "biochar heat"
-                     ) 
+                     )
                 n.add("Store",
                       biochar_heat_out,
                       bus = biochar_heat_out,
@@ -1027,6 +1027,7 @@ def add_afforestation(n, costs):
 
     # read afforestation potentials from CSV file
     afforestation_potentials = pd.read_csv(snakemake.input.afforestation_potentials).set_index("node")
+    potentials = afforestation_potentials["potential [t/ha]"].values
 
 
     # add CO2 afforestation bus
@@ -1043,18 +1044,27 @@ def add_afforestation(n, costs):
           bus = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
           e_nom_extendable = True,
-          e_nom_max = afforestation_potentials["potential [t/ha]"].values * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"]
+          e_nom_max = potentials * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"]
          )
 
 
+    # prepare capital costs
+    cost = costs.at["Afforestation", "fixed"]   # EUR/ha
+    capital_costs = []
+    for potential in potentials:
+        if potential == 0: 
+            capital_costs.append(0)
+        else:
+            capital_costs.append(cost / potential / snakemake.config["afforestation"]["co2_per_tonne"])
+
+
     # add CO2 afforestation link
-    capital_cost = costs.at["Afforestation", "fixed"]   # EUR/ha
     n.add("Link",
           spatial.nodes + " afforestation",
           bus0 = "co2 atmosphere",
           bus1 = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
-          capital_cost = capital_cost / afforestation_potentials["potential [t/ha]"].values / snakemake.config["afforestation"]["co2_per_tonne"],
+          capital_cost = capital_costs,
           efficiency = 1,
           p_min_pu = 1,
           p_max_pu = 1,
