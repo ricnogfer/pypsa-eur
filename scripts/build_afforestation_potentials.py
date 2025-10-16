@@ -3,10 +3,17 @@
 import geopandas
 import pandas
 import logging
+import yaml
 
 
 
-def build_afforestation_potentials(regions_geojson, nuts2_geojson, afforestation_corine_potentials_csv_file, afforestation_nuts2_rates_csv_file, output_csv_file, log):
+def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, afforestation_corine_potentials_csv_file, afforestation_nuts2_rates_csv_file, output_csv_file, log):
+
+    # load config yaml file representing the PyPSA-Eur configuration
+    handle = open(config_yaml)
+    config = yaml.safe_load(handle)
+    handle.close()
+
 
     # configure log mechanism
     if log is True:
@@ -16,26 +23,24 @@ def build_afforestation_potentials(regions_geojson, nuts2_geojson, afforestation
 
 
     # load files
-    regions = geopandas.read_file(regions_geojson)
+    network = geopandas.read_file(network_geojson)
     nuts2 = geopandas.read_file(nuts2_geojson)
     corine_potentials = pandas.read_csv(afforestation_corine_potentials_csv_file).set_index("node")
     nuts2_rates = pandas.read_csv(afforestation_nuts2_rates_csv_file).set_index("NUTS2")
 
 
     # create data frame to store afforestation potential for each node
-    data_frame = pandas.DataFrame(columns = ["node", "potential [t]"])
+    data_frame = pandas.DataFrame(columns = ["node", "potential [t/ha]"])
 
 
     # iterate through PyPSA-Eur network regions (nodes)
-    for i in range(len(regions)):
+    for i in range(len(network)):
 
         # get node name and geometry
-        region = regions.iloc[i]
+        region = network.iloc[i]
         node_name = region["name"]
         node_geometry = geopandas.GeoSeries(region["geometry"])
         node_geometry.crs = nuts2.crs
-
-        print(node_name)
 
         # iterate through NUTS2 codes
         node_afforestation_potential = 0
@@ -50,20 +55,20 @@ def build_afforestation_potentials(regions_geojson, nuts2_geojson, afforestation
             proportion = float(intersection.area.iloc[0]) / float(nuts2_geometry.area.iloc[0])
 
             # calculate afforestation potential based on intersection and aggregate this potential to the node's afforestation potential
-            node_afforestation_potential += (corine_potentials.loc[node_name]["potential [sqkm]"] * 100) * nuts2_rate.loc[nuts2_row["NUTS_ID"]]["affo rate (t/ha/y)"] * proportion
+            node_afforestation_potential += (corine_potentials.loc[node_name]["potential [sqkm]"] * 100) * nuts2_rates.loc[nuts2_row["NUTS_ID"]]["affo rate (t/ha/y)"] * proportion
 
 
         # add node afforestation potential into data frame
         if log is True:
-            logger.info("Node '%s' has an afforestation potential of %d" % (node_name, node_afforestation_potential))
+            logger.info("Node '%s' has an afforestation potential of %d [t/ha]" % (node_name, node_afforestation_potential))
         data_frame.loc[len(data_frame)] = [node_name, node_afforestation_potential]
 
 
     # save afforestation potentials into CSV file
     if log is True:
         logger.info("Save afforestation potentials into CSV file '%s'" % output_csv_file)
-    afforestation_potentials.set_index("node", inplace = True)
-    afforestation_potentials.to_csv(output_csv_file)
+    data_frame.set_index("node", inplace = True)
+    data_frame.to_csv(output_csv_file)
 
 
 
@@ -71,8 +76,8 @@ if __name__ == "__main__":
 
     # build and save afforestation potentials into CSV file
     if "snakemake" in globals():
-        build_afforestation_potentials(snakemake.params["regions_geojson"], snakemake.params["nuts2_geojson"], snakemake.input["afforestation_corine_potential_csv_file"], snakemake.input["afforestation_nuts2_rates_csv_file"], snakemake.output["csv_file"], True)
+        build_afforestation_potentials("config/config.yaml", snakemake.params["network_geojson"], snakemake.params["nuts2_geojson"], snakemake.input["afforestation_corine_potentials_csv_file"], snakemake.input["afforestation_nuts2_rates_csv_file"], snakemake.output["csv_file"], True)
     else:
-        build_afforestation_potentials("regions_onshore_base_s_90.geojson", "NUTS_RG_03M_2013_4326_LEVL_2.geojson", "afforestation_corine_potentials_s_39.csv", "afforestation_nuts2.csv", "afforestation_potentials_s_39.csv", True)
+        build_afforestation_potentials("config.yaml", "regions_onshore_base_s_39.geojson", "NUTS_RG_03M_2013_4326_LEVL_2.geojson", "afforestation_corine_potentials_s_39.csv", "afforestation_nuts2.csv", "afforestation_potentials_s_39.csv", True)
 
 

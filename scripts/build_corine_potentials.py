@@ -46,7 +46,7 @@ def build_corine_potentials(config_yaml, network_geojson, corine_dataset, resolu
         selected_cells = band.sum() * cell_area / 1e6   # in sqkm
         df.loc[len(df)] = [node, area, selected_cells]
         if log is True:
-            logger.info("Node=%s * Area=%0.f (sqkm) * Potential=%0.f (sqkm)" % (node, area, selected_cells))
+            logger.info("Node=%s * Area=%0.f [sqkm] * Potential=%0.f [sqkm]" % (node, area, selected_cells))
 
 
     # save CORINE potentials into CSV file
