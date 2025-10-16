@@ -547,7 +547,7 @@ rule build_EW_potentials:
         "../scripts/build_potentials_EW.py" 
 
 
-rule build_afforestation_potentials:
+rule build_afforestation_corine_potentials:
     params:
         component = "afforestation",
         resolution = 250,
@@ -555,8 +555,27 @@ rule build_afforestation_potentials:
         corine_dataset = "data/bundle/corine/g250_clc06_V18_5.tif",
         network_geojson = resources("regions_onshore_base_s_{clusters}.geojson"),
     output:
+        csv_file = resources("afforestation_corine_potentials_s_{clusters}.csv"),
+        png_file = resources("afforestation_corine_potentials_s_{clusters}.png"),
+    log:
+        logs("build_afforestation_corine_potentials_s_{clusters}.log"),
+    resources:
+        mem_mb = 5000,
+    conda:
+        "../envs/environment.yaml"
+    script:
+        "../scripts/build_corine_potentials.py"
+
+
+rule build_afforestation_potentials:
+    params:
+        network_geojson = resources("regions_onshore_base_s_{clusters}.geojson"),
+        nuts2_geojson = "data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
+    input:
+        afforestation_corine_potentials_csv_file = resources("afforestation_corine_potentials_s_{clusters}.csv"),
+        afforestation_nuts2_rates_csv_file = resources("afforestation_nuts2.csv"),
+    output:
         csv_file = resources("afforestation_potentials_s_{clusters}.csv"),
-        png_file = resources("afforestation_potentials_s_{clusters}.png"),
     log:
         logs("build_afforestation_potentials_s_{clusters}.log"),
     resources:
@@ -564,7 +583,18 @@ rule build_afforestation_potentials:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_potentials.py"
+        "../scripts/build_afforestation_potentials.py"
+
+
+rule get_afforestation_nuts2_rates:
+    input:
+        afforestation_nuts2_rates = storage("https://raw.githubusercontent.com/BertoGBG/CO2-stores-preprocessing/refs/heads/main/afforestation/data/afforestation/afforestation_nuts2.csv"),
+    output:
+        csv_file = resources("afforestation_nuts2.csv"),
+    log:
+        logs("get_afforestation_nuts2_rates.log"),
+    resources:
+        mem_mb = 5000,
 
 
 rule build_biomass_transport_costs:
