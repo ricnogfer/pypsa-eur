@@ -801,7 +801,7 @@ def add_biochar(n, costs):
           bus = spatial.nodes + " co2 biochar",
           carrier = "co2 biochar",
           e_nom_extendable = True,
-          e_nom_max = biochar_potentials["potential"].values * co2_per_tonne * snakemake.config["biochar"]["co2_per_tonne_multiplier"] * snakemake.config["biochar"]["max_land_usage"]
+          e_nom_max = biochar_potentials["potential [sqkm]"].values * co2_per_tonne * snakemake.config["biochar"]["co2_per_tonne_multiplier"] * snakemake.config["biochar"]["potential_per_sqkm"] * snakemake.config["biochar"]["max_land_usage"]
          )
 
 
@@ -839,8 +839,8 @@ def add_biochar(n, costs):
                       carrier = "biochar heat"
                      )
                 n.add("Bus",
-                     biochar_heat_out,
-                     carrier = "biochar heat"
+                      biochar_heat_out,
+                      carrier = "biochar heat"
                      ) 
                 n.add("Store",
                       biochar_heat_out,

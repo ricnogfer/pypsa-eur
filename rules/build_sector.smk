@@ -523,7 +523,7 @@ rule build_biochar_potentials:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/build_potentials.py"
+        "../scripts/build_corine_potentials.py"
 
 
 rule build_EW_potentials:
