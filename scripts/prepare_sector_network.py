@@ -1043,27 +1043,18 @@ def add_afforestation(n, costs):
           bus = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
           e_nom_extendable = True,
-          e_nom_max = afforestation_potentials["potential"].values * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"] / costs.at["Afforestation", "lifetime"]
+          e_nom_max = afforestation_potentials["potential [t/ha]"].values * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"]
          )
 
 
-    # calculate capital cost for each country based on its forest (dry) biomass potential/density
-    cost = costs.at["Afforestation", "fixed"] * 100   # EUR/sqkm
-    capital_costs = []
-    for node in spatial.nodes:
-        country = node[:2]
-        potential = snakemake.config["afforestation"]["potential_per_sqkm"][country]
-        capital_costs.append(cost / potential / snakemake.config["afforestation"]["co2_per_tonne"])
-
-    #print("capital_cost_per_sqkm=%d * eur/tco2 = %d" % (cost, cost / 11700 / snakemake.config["afforestation"]["co2_per_tonne"]))
-
     # add CO2 afforestation link
+    capital_cost = costs.at["Afforestation", "fixed"]   # EUR/ha
     n.add("Link",
           spatial.nodes + " afforestation",
           bus0 = "co2 atmosphere",
           bus1 = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
-          capital_cost = capital_costs,
+          capital_cost = capital_cost / afforestation_potentials["potential [t/ha]"].values / snakemake.config["afforestation"]["co2_per_tonne"],
           efficiency = 1,
           p_min_pu = 1,
           p_max_pu = 1,
