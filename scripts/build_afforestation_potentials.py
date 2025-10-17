@@ -72,9 +72,9 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
             # calculate afforestation potential based on fraction and aggregate it to node afforestation potential
             node_afforestation_potential += (corine_potentials.loc[node_name]["potential [sqkm]"] * 100) * nuts2_growth_rates.loc[nuts2_name]["affo rate (t/ha/y)"] * fraction
 
-        # check that total fraction is 1 or very close to this value
+        # check that total fraction is very close/near to 1
         if total_fraction > 0 and (total_fraction < 0.999 or total_fraction > 1.001):
-            logger.error("Node '%s' has an unexpected/incorrect total fraction of %d (expected value should be 1 or very close to this value)" % (node_name, total_fraction))
+            logger.error("Node '%s' has an unexpected/incorrect total fraction of %d (expected value should be very close/near to 1)" % (node_name, total_fraction))
 
         # add node afforestation potential into data frame
         if log is True:
