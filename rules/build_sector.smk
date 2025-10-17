@@ -573,7 +573,7 @@ rule build_afforestation_potentials:
         nuts2_geojson = "data/nuts/NUTS_RG_03M_2013_4326_LEVL_2.geojson",
     input:
         afforestation_corine_potentials_csv_file = resources("afforestation_corine_potentials_s_{clusters}.csv"),
-        afforestation_nuts2_rates_csv_file = resources("afforestation_nuts2.csv"),
+        afforestation_nuts2_growth_rates_csv_file = resources("afforestation_nuts2_growth_rates.csv"),
     output:
         csv_file = resources("afforestation_potentials_s_{clusters}.csv"),
     log:
@@ -586,16 +586,16 @@ rule build_afforestation_potentials:
         "../scripts/build_afforestation_potentials.py"
 
 
-rule get_afforestation_nuts2_rates:
+rule get_afforestation_nuts2_growth_rates:
     input:
     output:
-        csv_file = resources("afforestation_nuts2.csv"),
+        csv_file = resources("afforestation_nuts2_growth_rates.csv"),
     log:
         logs("get_afforestation_nuts2_rates.log"),
     resources:
         mem_mb = 5000,
     shell:
-       "wget https://raw.githubusercontent.com/BertoGBG/CO2-stores-preprocessing/refs/heads/main/afforestation/data/afforestation/afforestation_nuts2.csv -O resources/afforestation_nuts2.csv"
+       "wget https://raw.githubusercontent.com/BertoGBG/CO2-stores-preprocessing/refs/heads/main/afforestation/data/afforestation/afforestation_nuts2.csv -O resources/afforestation_nuts2_growth_rates.csv"
 
 
 rule build_biomass_transport_costs:
