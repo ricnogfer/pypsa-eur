@@ -830,21 +830,14 @@ def add_biochar(n, costs):
         for node in spatial.nodes:
             if (node + " urban central heat") in n.buses.index:
                 biochar_heat_bus = node + " biochar heat"
-                biochar_heat_out = node + " biochar heat out"
-
                 biochar_heat_buses.append(biochar_heat_bus)
-
                 n.add("Bus",
                       biochar_heat_bus,
                       carrier = "biochar heat"
                      )
-                n.add("Bus",
-                      biochar_heat_out,
-                      carrier = "biochar heat"
-                     )
                 n.add("Store",
-                      biochar_heat_out,
-                      bus = biochar_heat_out,
+                      biochar_heat_bus,
+                      bus = biochar_heat_bus,
                       e_nom_extendable = True,
                       carrier = "biochar heat"
                      )
@@ -852,13 +845,6 @@ def add_biochar(n, costs):
                       biochar_heat_bus,
                       bus0 = biochar_heat_bus,
                       bus1 = node + " urban central heat",
-                      p_nom_extendable = True,
-                      carrier = "biochar heat"
-                     )
-                n.add("Link",
-                      biochar_heat_out,
-                      bus0 = biochar_heat_bus,
-                      bus1 = biochar_heat_out,
                       p_nom_extendable = True,
                       carrier = "biochar heat"
                      )
