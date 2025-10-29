@@ -837,7 +837,7 @@ def add_biochar(n, costs):
                      )
                 n.add("Link",
                       biochar_heat_bus,
-                      bus0 = biochar_heat_bus
+                      bus0 = biochar_heat_bus,
                       bus1 = node + " urban central heat",
                       p_nom_extendable = True,
                       carrier = "biochar heat"
@@ -856,7 +856,7 @@ def add_biochar(n, costs):
                      )
                 n.add("Link",
                       biochar_heat_bus_waste,
-                      bus0 = biochar_heat_bus
+                      bus0 = biochar_heat_bus,
                       bus1 = biochar_heat_bus_waste,
                       p_nom_extendable = True,
                       carrier = "biochar heat"
