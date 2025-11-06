@@ -959,6 +959,15 @@ def add_perennials(n, costs):
 
     biomass_potentials = pd.read_csv(snakemake.input.biomass_potentials, index_col=0)
 
+
+	# perennials_area_spatial =  (
+    #    (
+    #        biomass_potentials.filter(regex='biofuels_1G')
+    #        / snakemake.config["perennials"]["yield_biofuels_1G"]
+    #    ).sum(axis=1)  # -> (MWh/y) / (MWh / ha / y) = (ha) returns the area used by sum of the 3 biofuels_1G classes, that is potentially assigned to perennials 
+
+	# perennials_potentials_spatial = perennials_area_spatial * snakemake.config["perennials"]["potential_co2"] # (ha) * (tCO2_seq_perennial/ha)
+	
     perennials_potentials_spatial = (
         (
             biomass_potentials.filter(regex='biofuels_1G')
