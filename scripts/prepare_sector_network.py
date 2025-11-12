@@ -864,7 +864,7 @@ def add_biochar(n, costs):
             else:
                 biochar_heat_buses.append(None)
     else:
-	biochar_heat_buses = [None]
+        biochar_heat_buses = [None]
 
 
     # add biochar links
