@@ -61,7 +61,7 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
                 biomass_density = nuts_biomass_density.loc[country]["(Tons/ha)"]
             else:
                 if log is True:
-                    logger.warning("Defaulting biomass density to 117 t/ha for country '%s'" % country)
+                    logger.warning("Set biomass density to 117 t/ha for node '%s' (given that country '%s' does not have information)" % (node_name, country))
                 biomass_density = 117   # average value across Europe is taken as default biomass density (in t/ha) in case country does not exist in dataframe (e.g. Kosovo - XK)
             node_afforestation_potential = (corine_potentials.loc[node_name]["potential [sqkm]"] * 100) * biomass_density / config["afforestation"]["number_years"]
 
