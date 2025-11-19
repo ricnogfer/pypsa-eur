@@ -275,9 +275,7 @@ biochar:
   max_land_usage: 0.2 # in fraction (in 2050)
 
 perennials:
-  yield: 15 # tDM perennials/ha/y
-  potential_co2: 2 # tCO2e/ha/y sequestred
-  yield_biofuels_1G: [38.1, 22.3, 11.9] # MWh/ha [Bioethanol barley, Sugar beet, Rape seed]
+  potential_co2: 2 # tCO2e/ha/y sequestered
 
 EW:
   EW_hot: 
@@ -416,21 +414,22 @@ biomass:
     - Sawdust
     - Residues from landscape care
     not included:
-    - Sugar from sugar beet
-    - Rape seed
-    - "Sunflower, soya seed "
-    - Bioethanol barley, wheat, grain maize, oats, other cereals and rye
+    #- Sugar from sugar beet
+    #- Rape seed
+    #- "Sunflower, soya seed "
+    #- Bioethanol barley, wheat, grain maize, oats, other cereals and rye
     - Miscanthus, switchgrass, RCG
     - Willow
     - Poplar
     - FuelwoodRW
     - C&P_RW
-    biofuels_1Gbioethanol:
+    biofuels_1G_bioethanol_cereals:
     - Bioethanol barley, wheat, grain maize, oats, other cereals and rye
-    biofuels_1Gsugar:
+    biofuels_1G_bioethanol_sugar:
     - Sugar from sugar beet
-    biofuels_1Grs:
+    biofuels_1G_biodiesel:
     - Rape seed
+    - "Sunflower, soya seed "
     biogas:
     - Manure solid, liquid
     - Sludge
