@@ -1022,7 +1022,7 @@ def add_afforestation(n, costs):
 
     # read afforestation potentials from CSV file
     afforestation_potentials = pd.read_csv(snakemake.input.afforestation_potentials).set_index("node")
-    potentials = afforestation_potentials["potential [t/ha]"].values
+    potentials = afforestation_potentials["potential [t/y]"].values
 
 
     # add CO2 afforestation bus
