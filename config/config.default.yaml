@@ -273,6 +273,7 @@ biochar:
   potential_per_sqkm: 1500 # in tonnes (of biochar) (15t/ha)
   co2_per_tonne_multiplier: 1 # in tonnes multiplier * (0.85 (tC/tbiochar) * 0.7 (%biochar >100y) * 44/12)
   max_land_usage: 0.2 # in fraction (in 2050)
+  number_years: 25
 
 perennials:
   potential_co2: 2 # tCO2e/ha/y sequestered
