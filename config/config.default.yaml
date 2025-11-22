@@ -296,7 +296,6 @@ afforestation:
   potential_type: "density" # "density" or "growth"
   co2_per_tonne: 1.83 # in tonnes (0.5 * 44.01 / 12.01)
   max_land_usage: 0.6 # in fraction
-  number_years: 30
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
 conventional:
