@@ -42,12 +42,11 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
         nuts2_growth_rates = nuts2_growth_rates.rename(index = lambda x: "GB%s" % x[2:] if x[:2] == "UK" else x)
 
 
-    # create data frame to store afforestation potential for each node
-    data_frame = pandas.DataFrame(columns = ["node", "land [ha]", "potential [t/ha]"])
-
-
     # iterate through PyPSA-Eur network regions (nodes)
     if config["afforestation"]["potential_type"] == "density":
+
+        # create data frame to store afforestation potential for each node
+        data_frame = pandas.DataFrame(columns = ["node", "biomass density [t/ha]", "potential [t/ha]"])
 
         for i in range(len(network)):
 
@@ -63,15 +62,17 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
                 if log is True:
                     logger.warning("Set biomass density to 117 t/ha for node '%s' (given that country '%s' does not have information)" % (node_name, country))
                 biomass_density = 117   # average value across Europe is taken as default biomass density (in t/ha) in case country does not exist in dataframe (e.g. Kosovo - XK)
-            node_land_potential = corine_potentials.loc[node_name]["potential [sqkm]"] * 100   # in ha
-            node_afforestation_potential = node_land_potential * biomass_density
+            node_afforestation_potential = (corine_potentials.loc[node_name]["potential [sqkm]"] * 100) * biomass_density
 
             # add node afforestation potential into data frame
             if log is True:
                 logger.info("Node '%s' has an afforestation potential of %d [t/ha]" % (node_name, node_afforestation_potential))
-            data_frame.loc[len(data_frame)] = [node_name, node_land_potential, node_afforestation_potential]   
+            data_frame.loc[len(data_frame)] = [node_name, biomass_density, node_afforestation_potential]   
 
     else:   # growth
+
+        # create data frame to store afforestation potential for each node
+        data_frame = pandas.DataFrame(columns = ["node", "land [ha]", "potential [t/ha]"])
 
         for i in range(len(network)):
 
@@ -102,8 +103,7 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
                 total_fraction += fraction
 
                 # calculate afforestation potential based on fraction and aggregate it to node afforestation potential
-                node_land_potential = corine_potentials.loc[node_name]["potential [sqkm]"] * 100   # in ha
-                node_afforestation_potential += node_land_potential * nuts2_growth_rates.loc[nuts2_name]["affo rate (t/ha/y)"] * fraction
+                node_afforestation_potential += (corine_potentials.loc[node_name]["potential [sqkm]"] * 100) * nuts2_growth_rates.loc[nuts2_name]["affo rate (t/ha/y)"] * fraction
 
             # check that total fraction is very close/near to 1
             if total_fraction > 0 and (total_fraction < 0.99 or total_fraction > 1.01):
@@ -112,7 +112,7 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
             # add node afforestation potential into data frame
             if log is True:
                 logger.info("Node '%s' has an afforestation potential of %d [t/ha]" % (node_name, node_afforestation_potential))
-            data_frame.loc[len(data_frame)] = [node_name, node_land_potential, node_afforestation_potential]
+            data_frame.loc[len(data_frame)] = [node_name,  node_afforestation_potential]
 
 
     # save afforestation potentials into CSV file
