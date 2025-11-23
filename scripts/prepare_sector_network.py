@@ -1022,7 +1022,8 @@ def add_afforestation(n, costs):
 
     # read afforestation potentials from CSV file
     afforestation_potentials = pd.read_csv(snakemake.input.afforestation_potentials).set_index("node")
-    potentials = afforestation_potentials["potential [t/y]"].values
+    densities = afforestation_potentials["biomass density [t/ha]"].values
+    potentials = afforestation_potentials["potential [t/ha]"].values
 
 
     # add CO2 afforestation bus
@@ -1038,19 +1039,10 @@ def add_afforestation(n, costs):
           spatial.nodes + " co2 afforestation",
           bus = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
+          capital_cost = costs.at["Afforestation", "fixed"] / densities / snakemake.config["afforestation"]["co2_per_tonne"],
           e_nom_extendable = True,
-          e_nom_max = potentials * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"]
+          e_nom_max = potentials / costs.at["Afforestation", "lifetime"] * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"]
          )
-
-
-    # prepare capital costs
-    cost = costs.at["Afforestation", "fixed"]   # EUR/ha
-    capital_costs = []
-    for potential in potentials:
-        if potential == 0: 
-            capital_costs.append(0)
-        else:
-            capital_costs.append(cost / potential / snakemake.config["afforestation"]["co2_per_tonne"])
 
 
     # add CO2 afforestation link
@@ -1059,12 +1051,10 @@ def add_afforestation(n, costs):
           bus0 = "co2 atmosphere",
           bus1 = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
-          capital_cost = capital_costs,
           efficiency = 1,
           p_min_pu = 1,
           p_max_pu = 1,
-          p_nom_extendable = True,
-          lifetime = costs.at["Afforestation", "lifetime"]
+          p_nom_extendable = True
          )
 
 
