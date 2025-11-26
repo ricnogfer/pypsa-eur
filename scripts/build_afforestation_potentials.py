@@ -112,7 +112,7 @@ def build_afforestation_potentials(config_yaml, network_geojson, nuts2_geojson, 
             # add node afforestation potential into data frame
             if log is True:
                 logger.info("Node '%s' has an afforestation potential of %d [t/ha]" % (node_name, node_afforestation_potential))
-            data_frame.loc[len(data_frame)] = [node_name,  node_afforestation_potential]
+            data_frame.loc[len(data_frame)] = [node_name, node_afforestation_potential]
 
 
     # save afforestation potentials into CSV file
