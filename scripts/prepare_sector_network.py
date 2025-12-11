@@ -1035,11 +1035,14 @@ def add_afforestation(n, costs):
 
 
     # add CO2 afforestation store
+    investment_cost = costs.at["Afforestation", "investment"]
+    maintenance_cost = investment_cost * (costs.at["Afforestation", "FOM"] / 100) * costs.at["Afforestation", "lifetime"]
+    capital_cost = (investment_cost + maintenance_cost) / (densities * snakemake.config["afforestation"]["co2_per_tonne"])
     n.add("Store",
           spatial.nodes + " co2 afforestation",
           bus = spatial.nodes + " co2 afforestation",
           carrier = "co2 afforestation",
-          capital_cost = costs.at["Afforestation", "fixed"] / densities / snakemake.config["afforestation"]["co2_per_tonne"],
+          capital_cost = capital_cost,
           e_nom_extendable = True,
           e_nom_max = potentials / costs.at["Afforestation", "lifetime"] * snakemake.config["afforestation"]["co2_per_tonne"] * snakemake.config["afforestation"]["max_land_usage"]
          )
