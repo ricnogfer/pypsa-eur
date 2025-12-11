@@ -280,12 +280,12 @@ perennials:
 
 EW:
   EW_hot: 
-    corine: [12, 13]
+    corine: [12, 13, 14]
     potential_per_sqkm: 839 # in tonnes
     co2_per_tonne:  # in tonnes
     climate: [23, 24, 28, 33, 34, 36]
   EW_temperate:
-    corine: [12, 13]
+    corine: [12, 13, 14]
     potential_per_sqkm: 309 # in tonnes
     co2_per_tonne: # in tonnes   
     climate: [10, 11, 14, 15]
