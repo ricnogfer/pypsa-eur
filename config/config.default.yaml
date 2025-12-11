@@ -294,7 +294,7 @@ EW:
 afforestation:
   corine: [29] # CORINE Land Cover (CLC) codes that can be used for afforestation
   potential_type: "density" # "density" or "growth"
-  co2_per_tonne: 1.83 # in tonnes (0.5 * 44.01 / 12.01)
+  co2_per_tonne: 1.83 # in tonnes (0.5 * 44 / 12)
   max_land_usage: 0.6 # in fraction
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
