@@ -129,7 +129,7 @@ electricity:
     enable: false
     by_country: false
 
-  transmission_limit: vopt
+  transmission_limit: v1.0
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#atlite
 atlite:
@@ -281,12 +281,12 @@ perennials:
 
 EW:
   EW_hot: 
-    corine: [12, 13]
+    corine: [12, 13, 14]
     potential_per_sqkm: 839 # in tonnes
     co2_per_tonne:  # in tonnes
     climate: [23, 24, 28, 33, 34, 36]
   EW_temperate:
-    corine: [12, 13]
+    corine: [12, 13, 14]
     potential_per_sqkm: 309 # in tonnes
     co2_per_tonne: # in tonnes   
     climate: [10, 11, 14, 15]
@@ -296,8 +296,6 @@ afforestation:
   corine: [29] # CORINE Land Cover (CLC) codes that can be used for afforestation
   potential_type: "density" # "density" or "growth"
   co2_per_tonne: 1.83 # in tonnes (0.5 * 44 / 12)
-  investment_cost: 7749 # in EUR/ha
-  maintenance_cost: 388 # in EUR/ha.y
   max_land_usage: 0.6 # in fraction
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#conventional
@@ -407,7 +405,7 @@ energy:
 
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#biomass
 biomass:
-  year: 2030
+  year: 2035
   scenario: ENS_Med
   classes:
     solid biomass:
