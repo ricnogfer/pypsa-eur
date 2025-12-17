@@ -709,7 +709,7 @@ sector:
       ocgt: false
       allam: false
     biomass_to_methanol: true
-    biomass_to_methanol_cc: false
+    biomass_to_methanol_cc: true
   ammonia: false
   min_part_load_fischer_tropsch: 0.5
   min_part_load_methanolisation: 0.3
@@ -744,11 +744,11 @@ sector:
   gas_distribution_grid_cost_factor: 1.0
   biomass_spatial: true
   biomass_transport: false
-  biogas_upgrading_cc: false
+  biogas_upgrading_cc: true
   conventional_generation:
     OCGT: gas
   biomass_to_liquid: true
-  biomass_to_liquid_cc: false
+  biomass_to_liquid_cc: true
   electrobiofuels: false
   biosng: false
   biosng_cc: false
