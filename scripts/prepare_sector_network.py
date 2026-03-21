@@ -879,9 +879,9 @@ def add_biochar(n, costs):
           capital_cost = costs.at["biochar pyrolysis", "fixed"],
           marginal_cost = costs.at["biochar pyrolysis", "VOM"],
           efficiency = 1,
-          efficiency2 = -costs.at["biochar pyrolysis", "biomass input"],
-          efficiency3 = -costs.at["biochar pyrolysis", "electricity input"],
-          efficiency4 = costs.at["biochar pyrolysis", "heat output"],
+          efficiency2 = -costs.at["biochar pyrolysis", "biomass-input"],
+          efficiency3 = -costs.at["biochar pyrolysis", "electricity-input"],
+          efficiency4 = costs.at["biochar pyrolysis", "heat-output"],
           p_nom_extendable = True
          )
 
@@ -1006,7 +1006,6 @@ def add_EW(n, costs):
        bus1="co2 atmosphere",
        bus2= nodes + " EW co2 store",
        carrier = "EW",
-       capital_cost = costs.at["Enhanced Weathering", "investment"]/costs.at["Enhanced Weathering", "electricity-input"],
        marginal_cost = costs.at["Enhanced Weathering", "VOM"]/costs.at["Enhanced Weathering", "electricity-input"],
        efficiency=-1/costs.at["Enhanced Weathering", "electricity-input"],
        efficiency2=1/costs.at["Enhanced Weathering", "electricity-input"],
