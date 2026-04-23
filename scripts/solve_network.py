@@ -1172,6 +1172,30 @@ def add_co2_atmosphere_constraint(n, snapshots):
             n.model.add_constraints(lhs <= rhs, name=f"GlobalConstraint-{name}")
 
 
+def add_local_nodal_co2_atmosphere_constraints(n, config):
+
+    logger.info("Add local/nodal CO2 constraints")
+
+    co2_budget_values_df = pd.read_csv("results/%s/co2_budget_s%s_%s_l%s_%s_%s_%s.csv" % (snakemake.config["run"]["name"], snakemake.wildcards.simpl, snakemake.wildcards.clusters, snakemake.wildcards.ll, snakemake.wildcards.opts, snakemake.wildcards.sector_opts, snakemake.wildcards.planning_horizons))
+
+    co2_budget_values_df.columns = ["co2 atmosphere", "co2 budget"]
+
+    stores_energy = n.model["Store-e"]
+
+    co2_budget = co2_budget_values_df["co2 budget"]
+
+    co2_budget.index = co2_budget_values_df["co2 atmosphere"]
+
+    first_timestamp = n.snapshots[0].strftime("%Y-%m-%d %X")
+
+    last_timestamp = n.snapshots[-1].strftime("%Y-%m-%d %X")
+
+    for atmosphere in co2_budget.index:
+        lhs = stores_energy[last_timestamp, atmosphere] - stores_energy[first_timestamp, atmosphere]
+        rhs = co2_budget[atmosphere]
+        n.model.add_constraints(lhs <= rhs, name = "%s constraint" % atmosphere)
+
+
 def extra_functionality(
     n: pypsa.Network, snapshots: pd.DatetimeIndex, planning_horizons: str | None = None
 ) -> None:
@@ -1241,6 +1265,10 @@ def extra_functionality(
 
     if config["sector"]["imports"]["enable"]:
         add_import_limit_constraint(n, snapshots)
+
+    # add local/nodal CO2 atmosphere constraints
+    if config["co2_atmosphere"] != "global":
+        add_local_nodal_co2_atmosphere_constraints(n, config)
 
     if n.params.custom_extra_functionality:
         source_path = n.params.custom_extra_functionality
