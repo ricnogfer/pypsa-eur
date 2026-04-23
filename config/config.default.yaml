@@ -102,6 +102,117 @@ co2_budget:
   2045: 0.05
   2050: 0.0
 
+# set to 'global' in case all nodes share the same (global) CO2 atmosphere, 'local' in case all nodes belonging to a country share the same CO2 atmosphere or 'nodal' in case each node has a separated CO2 atmosphere from other nodes
+co2_atmosphere: global
+
+# CO2 budget per year and country as a fraction of 1990 emissions (for when option 'co2_atmosphere' is set to 'local' or 'nodal')
+co2_budget_local_nodal:
+  2030:
+    'AL': 0.45
+    'AT': 0.45
+    'BA': 0.45
+    'BE': 0.45
+    'BG': 0.45
+    'CH': 0.45
+    'CZ': 0.45
+    'DE': 0.45
+    'DK': 0.45
+    'EE': 0.45
+    'ES': 0.45
+    'FI': 0.45
+    'FR': 0.45
+    'GB': 0.45
+    'GR': 0.45
+    'HR': 0.45
+    'HU': 0.45
+    'IE': 0.45
+    'IT': 0.45
+    'LT': 0.45
+    'LU': 0.45
+    'LV': 0.45
+    'ME': 0.45
+    'MK': 0.45
+    'NL': 0.45
+    'NO': 0.45
+    'PL': 0.45
+    'PT': 0.45
+    'RO': 0.45
+    'RS': 0.45
+    'SE': 0.45
+    'SI': 0.45
+    'SK': 0.45
+    'XK': 0.45
+  2040:
+    'AL': 0.1
+    'AT': 0.1
+    'BA': 0.1
+    'BE': 0.1
+    'BG': 0.1
+    'CH': 0.1
+    'CZ': 0.1
+    'DE': 0.1
+    'DK': 0.1
+    'EE': 0.1
+    'ES': 0.1
+    'FI': 0.1
+    'FR': 0.1
+    'GB': 0.1
+    'GR': 0.1
+    'HR': 0.1
+    'HU': 0.1
+    'IE': 0.1
+    'IT': 0.1
+    'LT': 0.1
+    'LU': 0.1
+    'LV': 0.1
+    'ME': 0.1
+    'MK': 0.1
+    'NL': 0.1
+    'NO': 0.1
+    'PL': 0.1
+    'PT': 0.1
+    'RO': 0.1
+    'RS': 0.1
+    'SE': 0.1
+    'SI': 0.1
+    'SK': 0.1
+    'XK': 0.1
+  2050:
+    'AL': 0.0
+    'AT': 0.0
+    'BA': 0.0
+    'BE': 0.0
+    'BG': 0.0
+    'CH': 0.0
+    'CZ': 0.0
+    'DE': 0.0
+    'DK': 0.0
+    'EE': 0.0
+    'ES': 0.0
+    'FI': 0.0
+    'FR': 0.0
+    'GB': 0.0
+    'GR': 0.0
+    'HR': 0.0
+    'HU': 0.0
+    'IE': 0.0
+    'IT': 0.0
+    'LT': 0.0
+    'LU': 0.0
+    'LV': 0.0
+    'ME': 0.0
+    'MK': 0.0
+    'NL': 0.0
+    'NO': 0.0
+    'PL': 0.0
+    'PT': 0.0
+    'RO': 0.0
+    'RS': 0.0
+    'SE': 0.0
+    'SI': 0.0
+    'SK': 0.0
+    'XK': 0.0
+
 # docs in https://pypsa-eur.readthedocs.io/en/latest/configuration.html#electricity
 electricity:
   voltages:
